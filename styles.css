@@ -1,0 +1,197 @@
+:root {
+    --gomi-red: #f87171;
+    --gomi-blue: #60a5fa;
+    --dark-bg: #121212;
+    --disabled-gray: #374151;
+}
+
+body {
+    font-family: 'Montserrat', sans-serif;
+    background-color: #fcfaf8;
+    color: #333;
+    overflow-x: hidden;
+}
+
+/* AUTH OVERLAY */
+#authOverlay {
+    position: fixed;
+    inset: 0;
+    background: white;
+    z-index: 100;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    transition: opacity 0.5s ease, visibility 0.5s ease;
+}
+
+#authOverlay.hidden {
+    opacity: 0;
+    visibility: hidden;
+    pointer-events: none;
+}
+
+/* CICLO VISUAL */
+.cycle-visual {
+    position: relative;
+    width: 260px;
+    height: 260px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+.progress-ring {
+    transform: rotate(-90deg);
+}
+
+.progress-ring__circle {
+    transition: stroke-dashoffset 0.35s;
+    transform-origin: 50% 50%;
+}
+
+/* NAVEGACIÓN INFERIOR */
+.bottom-nav {
+    position: fixed;
+    bottom: 0;
+    left: 0;
+    right: 0;
+    background: white;
+    display: flex;
+    justify-content: space-around;
+    padding: 15px;
+    border-top: 1px solid #eee;
+    z-index: 40;
+    box-shadow: 0 -4px 10px rgba(0,0,0,0.05);
+}
+
+.nav-item {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    font-size: 10px;
+    font-weight: 700;
+    color: #9ca3af;
+    cursor: pointer;
+}
+
+.nav-item.active {
+    color: var(--gomi-red);
+}
+
+/* SECCIONES DE LA APP */
+.app-section {
+    display: none;
+    opacity: 0;
+    transition: opacity 0.4s ease;
+}
+
+.app-section.active {
+    display: block;
+    opacity: 1;
+}
+
+/* CALENDARIO */
+.calendar-dark {
+    background: var(--dark-bg);
+    border-radius: 30px;
+    color: white;
+    padding: 20px;
+}
+
+.day-cell {
+    aspect-ratio: 1;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 0.8rem;
+    border-radius: 12px;
+    position: relative;
+    transition: all 0.2s;
+}
+
+/* ESTILOS ESPECÍFICOS DE DÍAS */
+.day-forbidden {
+    color: var(--disabled-gray) !important;
+    cursor: not-allowed;
+    pointer-events: none;
+    opacity: 0.3;
+}
+
+.day-period-active {
+    background: var(--gomi-red);
+    color: white !important;
+    font-weight: bold;
+    box-shadow: 0 4px 10px rgba(248, 113, 113, 0.4);
+}
+
+.day-period-projected {
+    background: rgba(96, 165, 250, 0.15);
+    border: 1px dashed var(--gomi-blue);
+    color: var(--gomi-blue) !important;
+    font-weight: bold;
+}
+
+.day-today {
+    border: 2px solid var(--gomi-red);
+    color: var(--gomi-red);
+    font-weight: bold;
+}
+
+/* INPUTS PERSONALIZADOS */
+.custom-input {
+    width: 100%;
+    padding: 1rem;
+    border-radius: 1rem;
+    background: #f3f4f6;
+    border: 2px solid transparent;
+    outline: none;
+    font-size: 0.85rem;
+}
+
+/* CARDS */
+.info-card {
+    background: white;
+    border-radius: 25px;
+    padding: 24px;
+    margin-bottom: 20px;
+    box-shadow: 0 4px 15px rgba(0,0,0,0.03);
+    border: 1px solid #f0f0f0;
+}
+
+.symptom-card {
+    background: white;
+    border-radius: 20px;
+    padding: 16px;
+    text-align: center;
+    transition: all 0.3s;
+    border: 2px solid transparent;
+    cursor: pointer;
+}
+
+.symptom-card.active {
+    border-color: var(--gomi-red);
+    background: #fef2f2;
+}
+
+/* BOTONES DE NAVEGACIÓN */
+.nav-arrow {
+    padding: 8px;
+    border-radius: 50%;
+    background: rgba(255,255,255,0.05);
+    transition: all 0.2s;
+}
+
+.nav-arrow:hover {
+    background: rgba(255,255,255,0.15);
+}
+
+/* ANIMACIÓN DESPLEGABLE */
+.accordion-content {
+    max-height: 0;
+    overflow: hidden;
+    transition: max-height 0.3s ease-out;
+}
+
+.accordion-content.open {
+    max-height: 200px;
+}
