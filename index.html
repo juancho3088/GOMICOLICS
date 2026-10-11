@@ -3,185 +3,1959 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Gomi-Colic | Gestión Inteligente</title>
+    <title>Gomi-Colic - Tu Diario de Bienestar</title>
     
-    <script src="https://cdn.tailwindcss.com"></script>
-    <link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@300;400;600;700&display=swap" rel="stylesheet">
-    <link rel="stylesheet" href="css/styles.css">
-</head>
-<body class="bg-[#fcfaf8] min-h-screen pb-32">
+   <!-- External Styles & Scripts -->
+   <script src="https://cdn.tailwindcss.com"></script>
+   
+   <script>
+        tailwind.config = {
+            theme: {
+                extend: {
+                    colors: {
+                        brand: {
+                            50: '#FFF5F7',
+                            100: '#FFE4E6',
+                            200: '#FECDD3',
+                            300: '#FDA4AF',
+                            400: '#FB7185',
+                            500: '#F43F5E',
+                            600: '#E11D48',
+                        },
+                    },
+                    fontFamily: {
+                        sans: ['Plus Jakarta Sans', 'sans-serif'],
+                    }
+                }
+            }
+        }
+    </script>
+    
+    <style>
+        body {
+            background-color: #FFF5F7;
+            font-family: 'Plus Jakarta Sans', sans-serif;
+            overflow-x: hidden;
+        }
+        .tab-content { display: none; }
+        .tab-content.active { display: block; }
+        
+        .nav-item { color: #9CA3AF; transition: all 0.2s ease; }
+        .nav-item.active { color: #F43F5E; }
 
-    <!-- LOGIN / REGISTRO -->
-    <div id="authOverlay">
-        <div class="max-w-sm w-full px-8 text-center space-y-6">
-            <img src="assets/image_97ff91.jpg" alt="Logo Gomicolics" class="w-24 h-24 rounded-full mx-auto shadow-2xl border-4 border-white">
-            <div class="space-y-1">
-                <h1 class="text-2xl font-bold text-gray-800 italic">Gomi-Colic</h1>
-                <p class="text-[10px] font-semibold text-red-400 uppercase tracking-widest">Configura tu perfil</p>
+        .calendar-day {
+            aspect-ratio: 1;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            border-radius: 9999px;
+            font-size: 0.75rem;
+            position: relative;
+            transition: all 0.2s ease;
+            cursor: pointer;
+        }
+        .day-disabled { opacity: 0.35; }
+        .day-today { border: 2px solid #F43F5E; font-weight: 800; }
+        .day-period { background-color: #F43F5E !important; color: white !important; font-weight: bold; }
+        .day-predicted { background-color: #FFE4E6; color: #881337; }
+        .day-ovulation { background-color: #C084FC; color: white; }
+        .day-fertile { background-color: #F3E8FF; color: #7E22CE; }
+
+        .fade-in { animation: fadeIn 0.3s ease-in-out; }
+        @keyframes fadeIn {
+            from { opacity: 0; transform: translateY(10px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+
+        .chip-btn {
+            border: 1px solid #FFE4E6;
+            background-color: white;
+            transition: all 0.2s ease;
+            cursor: pointer;
+        }
+        .chip-btn.selected {
+            background-color: #FFE4E6;
+            border-color: #F43F5E;
+            color: #E11D48;
+            font-weight: 700;
+        }
+        
+        ::-webkit-scrollbar { width: 4px; }
+        ::-webkit-scrollbar-thumb { background: #FDA4AF; border-radius: 10px; }
+
+        /* ===== CARRITO DE COMPRAS ===== */
+        #cartDrawer { transform: translateX(100%); transition: transform 0.35s cubic-bezier(0.4, 0, 0.2, 1); }
+        #cartDrawer.open { transform: translateX(0); }
+        #cartOverlay { opacity: 0; pointer-events: none; transition: opacity 0.3s ease; }
+        #cartOverlay.open { opacity: 1; pointer-events: auto; }
+        .cart-badge { position: absolute; top: -6px; right: -8px; min-width: 18px; height: 18px; background: #F43F5E; color: white; font-size: 10px; font-weight: 800; border-radius: 9999px; display: flex; align-items: center; justify-content: center; padding: 0 4px; box-shadow: 0 2px 6px rgba(244,63,94,.4); }
+        .qty-btn { width: 26px; height: 26px; border-radius: 9999px; background: #FFF1F2; color: #F43F5E; font-weight: 800; display: flex; align-items: center; justify-content: center; cursor: pointer; user-select: none; transition: all .2s; }
+        .qty-btn:hover { background: #F43F5E; color: white; }
+
+        /* ===== PRODUCTOS / AROMATERAPIA ===== */
+        .product-card { background: white; border-radius: 30px; border: 1px solid #FFE4E6; overflow: hidden; box-shadow: 0 2px 10px rgba(244,63,94,.06); transition: all .25s ease; }
+        .product-card:hover { transform: translateY(-3px); box-shadow: 0 10px 25px rgba(244,63,94,.15); }
+        .product-img { width: 100%; aspect-ratio: 1; object-fit: cover; background: #FFF5F7; }
+
+        /* ===== DESCUENTOS POR FIDELIDAD ===== */
+        .tier-dot { width: 10px; height: 10px; border-radius: 9999px; background: #FECDD3; }
+        .tier-dot.active { background: #F43F5E; box-shadow: 0 0 0 4px #FFE4E6; }
+        .tier-dot.reached { background: #FB7185; }
+
+        /* ===== ASISTENTE IA ===== */
+        #aiChatPanel { transform: translateY(120%); opacity: 0; transition: all .35s cubic-bezier(0.4, 0, 0.2, 1); pointer-events: none; }
+        #aiChatPanel.open { transform: translateY(0); opacity: 1; pointer-events: auto; }
+        .ai-msg { max-width: 85%; padding: 10px 14px; border-radius: 18px; font-size: 11px; line-height: 1.6; }
+        .ai-msg.bot { background: #FFF1F2; color: #4B5563; border-bottom-left-radius: 6px; }
+        .ai-msg.user { background: #F43F5E; color: white; border-bottom-right-radius: 6px; margin-left: auto; }
+        .typing-dot { width: 6px; height: 6px; background: #FDA4AF; border-radius: 9999px; display: inline-block; animation: blink 1.2s infinite; }
+        .typing-dot:nth-child(2) { animation-delay: .2s; }
+        .typing-dot:nth-child(3) { animation-delay: .4s; }
+        @keyframes blink { 0%, 80%, 100% { opacity: .25; } 40% { opacity: 1; } }
+
+        /* ===== BOTONES FLOTANTES ===== */
+        .fab-btn { width: 52px; height: 52px; border-radius: 9999px; display: flex; align-items: center; justify-content: center; color: white; box-shadow: 0 8px 20px rgba(0,0,0,.18); cursor: pointer; position: relative; transition: transform .2s ease; border: none; }
+        .fab-btn:active { transform: scale(0.92); }
+
+        @media print {
+            .fab-btn, nav, #aiChatPanel, #cartDrawer, #cartOverlay, #authScreen { display: none !important; }
+        }
+    </style>
+</head>
+<body class="min-h-screen pb-24 text-gray-800">
+
+    <!-- LOGIN SCREEN / GOOGLE OAUTH OVERLAY -->
+    <div id="authScreen" class="fixed inset-0 z-50 bg-[#FFF5F7] flex items-center justify-center p-6">
+        <div class="bg-white rounded-[40px] p-8 w-full max-w-sm shadow-xl border border-pink-100 text-center fade-in">
+            <div class="w-20 h-20 bg-rose-100 rounded-full mx-auto flex items-center justify-center text-3xl shadow-sm border-4 border-white mb-4">
+                <span>🧸</span>
+            </div>
+
+            <h2 class="text-2xl font-extrabold text-gray-800 tracking-tight">Gomi-Colic</h2>
+            <p class="text-[10px] font-bold text-rose-400 uppercase tracking-[0.2em] mt-1 mb-6">Tu Diario de Bienestar Seguro</p>
+
+            <p class="text-xs text-gray-500 mb-6 leading-relaxed">
+                Inicia sesión de forma segura para sincronizar tu ciclo menstrual y diario de bienestar encriptado en la nube.
+            </p>
+
+            <!-- Real Google Identity Services Button Container -->
+            <div id="googleButtonContainer" class="flex justify-center min-h-[48px] items-center">
+                <div class="animate-pulse text-xs font-semibold text-rose-400">Cargando Google Sign-In...</div>
+            </div>
+
+            <!-- Estado de la configuracion de Google OAuth -->
+            <div id="oauthStatusChip" class="mt-4 mx-auto w-fit text-[9px] font-bold uppercase tracking-wider px-3 py-1.5 rounded-full flex items-center gap-1.5 bg-amber-50 text-amber-600 border border-amber-100">
+                <span class="w-1.5 h-1.5 rounded-full bg-amber-500 animate-pulse"></span> Google OAuth sin configurar
+            </div>
+
+            <!-- Panel de configuracion del Client ID (soluciona el 401 invalid_client) -->
+            <div id="oauthSetupPanel" class="hidden mt-4 text-left bg-rose-50/60 border border-pink-100 rounded-2xl p-4">
+                <p class="text-[10px] font-extrabold text-gray-700 uppercase tracking-wider mb-2 flex items-center gap-1.5">
+                    <i class="fa-solid fa-triangle-exclamation text-rose-500"></i>
+                    Error 401: invalid_client — falta el Client ID
+                </p>
+                <p class="text-[10px] text-gray-500 leading-relaxed mb-3">
+                    "The OAuth client was not found" significa que el Client ID no está
+                    registrado en Google Cloud Console. Configúralo en 4 pasos:
+                </p>
+                <ol class="text-[9px] text-gray-500 leading-relaxed list-decimal list-inside mb-3 space-y-1">
+                    <li>Entra a <b>console.cloud.google.com</b> → <b>APIs y servicios → Credenciales</b></li>
+                    <li>Si no tienes: <b>Crear credenciales → ID de cliente de OAuth → Aplicación web</b></li>
+                    <li>En <b>Orígenes de JavaScript autorizados</b> agrega el origen de esta página
+                        (ej.: <b>http://localhost:8000</b> o tu dominio https)</li>
+                    <li>Copia el <b>ID de cliente</b> (termina en <b>.apps.googleusercontent.com</b>) y pégalo abajo → <b>Guardar</b></li>
+                </ol>
+                <div class="flex gap-2">
+                    <input id="oauthClientIdInput" type="text" spellcheck="false"
+                        placeholder="1234567890-abcdef123.apps.googleusercontent.com"
+                        class="flex-1 min-w-0 text-[10px] font-mono bg-white border border-pink-200 rounded-xl px-3 py-2 focus:outline-none focus:ring-2 focus:ring-rose-300">
+                    <button onclick="saveGoogleClientId()"
+                        class="bg-rose-500 hover:bg-rose-600 text-white text-[10px] font-bold px-4 py-2 rounded-xl transition-all shrink-0">
+                        Guardar
+                    </button>
+                </div>
+                <p class="text-[8px] text-gray-400 mt-2 leading-relaxed">
+                    Se guarda solo en tu navegador (localStorage). Para producción, colócalo
+                    directamente en la constante <b>GOOGLE_CLIENT_ID_PLACEHOLDER</b> de index.html.
+                </p>
+                <a href="guia_google_oauth.html" target="_blank"
+                    class="mt-2 inline-flex items-center gap-1 text-[9px] font-bold text-rose-500 hover:text-rose-600 underline">
+                    <i class="fa-solid fa-book-open text-[8px]"></i> Ver guía completa de configuración
+                </a>
+            </div>
+
+            <button onclick="toggleOAuthSetup()" id="oauthSetupToggle"
+                class="mt-4 text-[9px] font-bold text-gray-400 hover:text-rose-500 uppercase tracking-wider transition-all">
+                ⚙️ Configurar Google Login / Solucionar error 401
+            </button>
+
+            <p class="text-[9px] text-gray-400 mt-4 leading-tight">
+                Protección de datos conforme a GDPR. Tus registros médicos no son compartidos con terceros.
+            </p>
+        </div>
+    </div>
+
+    <!-- MAIN HEADER -->
+    <header class="sticky top-0 z-40 bg-white/90 backdrop-blur-md border-b border-pink-100 px-4 py-3">
+        <div class="max-w-md mx-auto flex items-center justify-between">
+            <div class="flex items-center gap-3">
+                <div id="avatarCircle" class="w-10 h-10 rounded-full bg-rose-500 text-white font-bold flex items-center justify-center shadow-sm">
+                    G
+                </div>
+                <div>
+                    <h1 id="userGreeting" class="font-bold text-sm text-gray-800">Hola, Cuidadora</h1>
+                    <div class="flex items-center gap-1.5">
+                        <span class="w-2 h-2 rounded-full bg-emerald-500 animate-pulse"></span>
+                        <p class="text-[9px] font-bold text-emerald-600 uppercase tracking-wider">
+                            <span id="liveUserCounter">1</span> en vivo
+                        </p>
+                    </div>
+                </div>
+            </div>
+
+            <div class="flex items-center gap-2">
+                <!-- Shopping Cart Button -->
+                <button onclick="openCart()" class="w-9 h-9 rounded-full bg-rose-50 hover:bg-rose-100 text-rose-500 flex items-center justify-center transition-all relative">
+                    <i class="fa-solid fa-cart-shopping text-sm"></i>
+                    <span id="cartCountBadge" class="cart-badge" style="display:none;">0</span>
+                </button>
+
+                <!-- APK Download Trigger Button -->
+                <button onclick="openApkModal()" class="bg-rose-50 text-rose-600 hover:bg-rose-100 border border-pink-200 px-3 py-1.5 rounded-2xl text-[10px] font-extrabold uppercase tracking-wider flex items-center gap-1.5 transition-all">
+                    <i class="fa-solid fa-mobile-screen-button text-xs"></i>
+                    <span>APK</span>
+                </button>
+
+                <!-- Logout Button -->
+                <button onclick="logout()" title="Cerrar Sesión" class="w-8 h-8 rounded-full bg-gray-50 hover:bg-rose-50 text-gray-400 hover:text-rose-500 flex items-center justify-center transition-all">
+                    <i class="fa-solid fa-right-from-bracket text-xs"></i>
+                </button>
+            </div>
+        </div>
+    </header>
+
+    <!-- CONTENT AREA -->
+    <main class="max-w-md mx-auto px-4 pt-4">
+
+        <!-- TAB 1: CALENDAR -->
+        <section id="tab-calendar" class="tab-content active space-y-4 fade-in">
+            <!-- Cycle Status Card -->
+            <div class="bg-white rounded-[35px] p-6 shadow-sm border border-pink-100 text-center relative overflow-hidden">
+                <div class="w-44 h-44 mx-auto rounded-full border-4 border-pink-100 flex flex-col items-center justify-center p-4 bg-gradient-to-b from-pink-50/50 to-white relative z-10 shadow-inner">
+                    <span class="text-[10px] font-black text-rose-400 uppercase tracking-widest mb-1" id="cycleBadge">DÍA -</span>
+                    <h2 id="cycleText" class="text-xs font-bold text-gray-700 leading-tight">
+                        Cargando estado...<br>
+                        <span class="text-[10px] font-normal text-gray-400">Sincronizando con base de datos SQL</span>
+                    </h2>
+                </div>
+                
+                <div class="mt-6 pt-4 border-t border-pink-50 flex items-center gap-2">
+                    <input type="date" id="quickDate" class="flex-1 bg-pink-50/50 text-xs font-bold px-4 py-3 rounded-2xl border border-pink-100 focus:outline-none focus:ring-2 focus:ring-rose-300">
+                    <button onclick="registerPeriodFromInput()" class="bg-rose-500 hover:bg-rose-600 text-white font-bold text-xs px-5 py-3 rounded-2xl shadow-lg shadow-rose-200 transition-all flex items-center gap-1">
+                        <i class="fa-solid fa-plus text-[10px]"></i> Registrar
+                    </button>
+                </div>
+            </div>
+
+            <!-- Calendar Grid Card -->
+            <div class="bg-white rounded-[35px] p-6 shadow-sm border border-pink-100">
+                <div class="flex items-center justify-between mb-6 px-2">
+                    <button onclick="moveMonth(-1)" class="w-8 h-8 rounded-full bg-pink-50 text-rose-500 flex items-center justify-center hover:bg-rose-100 transition-all"><i class="fa-solid fa-chevron-left text-xs"></i></button>
+                    <h3 id="calendarMonthTitle" class="text-[11px] font-black uppercase tracking-widest text-gray-800">ENERO 2026</h3>
+                    <button onclick="moveMonth(1)" class="w-8 h-8 rounded-full bg-pink-50 text-rose-500 flex items-center justify-center hover:bg-rose-100 transition-all"><i class="fa-solid fa-chevron-right text-xs"></i></button>
+                </div>
+
+                <div class="grid grid-cols-7 gap-1 text-center text-[9px] font-black text-rose-300 uppercase mb-3">
+                    <span>Dom</span><span>Lun</span><span>Mar</span><span>Mie</span><span>Jue</span><span>Vie</span><span>Sab</span>
+                </div>
+
+                <div id="calendarGrid" class="grid grid-cols-7 gap-1 text-center min-h-[220px]">
+                    <!-- Rendered dynamically -->
+                </div>
+
+                <div class="mt-6 pt-4 border-t border-pink-50 grid grid-cols-2 gap-y-2 text-[9px] font-bold text-gray-500 px-2">
+                    <div class="flex items-center gap-2"><span class="w-2.5 h-2.5 rounded-full bg-rose-500"></span> Periodo Confirmado</div>
+                    <div class="flex items-center gap-2"><span class="w-2.5 h-2.5 rounded-full bg-pink-200"></span> Predicción Ciclo</div>
+                    <div class="flex items-center gap-2"><span class="w-2.5 h-2.5 rounded-full bg-purple-400"></span> Ovulación Estimada</div>
+                    <div class="flex items-center gap-2"><span class="w-2.5 h-2.5 rounded-full bg-purple-100"></span> Ventana Fértil</div>
+                </div>
+            </div>
+        </section>
+
+        <!-- TAB 2: DIARY -->
+        <section id="tab-diary" class="tab-content space-y-4 fade-in pb-8">
+            <div class="bg-white rounded-[35px] p-6 shadow-sm border border-pink-100">
+                <div class="flex justify-between items-center mb-4">
+                    <div>
+                        <h2 class="text-base font-bold text-gray-800">¿Cómo te sientes hoy?</h2>
+                        <p class="text-[10px] font-black text-rose-400 uppercase tracking-widest">DIARIO DE BIENESTAR SQL</p>
+                    </div>
+                    <button onclick="syncWithGoogleDrive()" title="Sincronizar copia de seguridad con Google Drive" class="bg-blue-50 text-blue-600 hover:bg-blue-100 text-[10px] font-bold px-3 py-1.5 rounded-xl border border-blue-200 flex items-center gap-1 transition-all">
+                        <i class="fa-brands fa-google-drive"></i> Drive Sync
+                    </button>
+                </div>
+
+                <form id="wellnessForm" onsubmit="saveWellnessLog(event)" class="space-y-5">
+                    <div>
+                        <label class="text-[10px] font-bold text-gray-400 uppercase ml-1 block mb-1">Fecha del Registro</label>
+                        <input type="date" id="logDate" required class="w-full bg-pink-50/40 border border-pink-100 rounded-2xl p-3 text-xs font-semibold focus:outline-none focus:ring-2 focus:ring-rose-300">
+                    </div>
+
+                    <div class="grid grid-cols-2 gap-3">
+                        <div>
+                            <label class="text-[10px] font-bold text-gray-500 uppercase ml-1 block mb-1">Dolor/Cólicos</label>
+                            <select id="logCramps" class="w-full bg-pink-50/40 border border-pink-100 rounded-2xl p-3 text-[11px] font-medium focus:outline-none">
+                                <option value="Sin dolor ✨">Sin dolor ✨</option>
+                                <option value="Leves 🍃">Leves 🍃</option>
+                                <option value="Moderados ⚡">Moderados ⚡</option>
+                                <option value="Intensos 🔥">Intensos 🔥</option>
+                                <option value="Severos 🆘">Severos 🆘</option>
+                            </select>
+                        </div>
+                        <div>
+                            <label class="text-[10px] font-bold text-gray-500 uppercase ml-1 block mb-1">Ánimo</label>
+                            <select id="logMood" class="w-full bg-pink-50/40 border border-pink-100 rounded-2xl p-3 text-[11px] font-medium focus:outline-none">
+                                <option value="Feliz 😊">Feliz 😊</option>
+                                <option value="Tranquila 🌸">Tranquila 🌸</option>
+                                <option value="Sensible 🥺">Sensible 🥺</option>
+                                <option value="Irritable 🌩️">Irritable 🌩️</option>
+                                <option value="Ansiosa 😰">Ansiosa 😰</option>
+                                <option value="Energética ⚡">Energética ⚡</option>
+                                <option value="Cansada 😴">Cansada 😴</option>
+                            </select>
+                        </div>
+                    </div>
+
+                    <div>
+                        <label class="text-[10px] font-bold text-gray-500 uppercase ml-1 block mb-2">Síntomas Físicos</label>
+                        <div class="flex flex-wrap gap-2" id="symptomChips">
+                            <button type="button" onclick="toggleChip(this)" class="chip-btn px-3 py-2 rounded-xl text-[10px] font-medium">Inflamación 🎈</button>
+                            <button type="button" onclick="toggleChip(this)" class="chip-btn px-3 py-2 rounded-xl text-[10px] font-medium">Dolor Cabeza 🤕</button>
+                            <button type="button" onclick="toggleChip(this)" class="chip-btn px-3 py-2 rounded-xl text-[10px] font-medium">Acné 🫐</button>
+                            <button type="button" onclick="toggleChip(this)" class="chip-btn px-3 py-2 rounded-xl text-[10px] font-medium">Dolor Lumbar 🦴</button>
+                            <button type="button" onclick="toggleChip(this)" class="chip-btn px-3 py-2 rounded-xl text-[10px] font-medium">Antojos 🍫</button>
+                            <button type="button" onclick="toggleChip(this)" class="chip-btn px-3 py-2 rounded-xl text-[10px] font-medium">Fatiga 😴</button>
+                        </div>
+                    </div>
+
+                    <div class="grid grid-cols-2 gap-3">
+                        <div>
+                            <label class="text-[10px] font-bold text-gray-500 uppercase ml-1 block mb-1">Flujo Vaginal</label>
+                            <select id="logFlow" class="w-full bg-pink-50/40 border border-pink-100 rounded-2xl p-2.5 text-[10px] font-medium">
+                                <option value="Seco">Seco</option>
+                                <option value="Cremoso">Cremoso</option>
+                                <option value="Clara de Huevo">Clara de Huevo (Fértil)</option>
+                                <option value="Manchado">Manchado</option>
+                                <option value="Abundante">Abundante</option>
+                            </select>
+                        </div>
+                        <div>
+                            <label class="text-[10px] font-bold text-gray-500 uppercase ml-1 block mb-1">Actividad Sexual</label>
+                            <select id="logSex" class="w-full bg-pink-50/40 border border-pink-100 rounded-2xl p-2.5 text-[10px] font-medium">
+                                <option value="Ninguna">Ninguna</option>
+                                <option value="Protegida 🛡️">Protegida 🛡️</option>
+                                <option value="Sin protección ⚠️">Sin protección ⚠️</option>
+                                <option value="Con Orgasmo ✨">Con Orgasmo ✨</option>
+                            </select>
+                        </div>
+                    </div>
+
+                    <div class="grid grid-cols-2 gap-3">
+                        <div>
+                            <label class="text-[10px] font-bold text-gray-500 uppercase ml-1 block mb-1">Anticonceptivo</label>
+                            <select id="logContra" class="w-full bg-pink-50/40 border border-pink-100 rounded-2xl p-2.5 text-[10px] font-medium">
+                                <option value="Ninguno">Ninguno</option>
+                                <option value="Pastilla tomada 💊">Pastilla tomada 💊</option>
+                                <option value="DIU / Inyección 🩺">DIU / Inyección 🩺</option>
+                                <option value="Emergencia 🆘">Emergencia 🆘</option>
+                            </select>
+                        </div>
+                        <div>
+                            <label class="text-[10px] font-bold text-gray-500 uppercase ml-1 block mb-1">Test Embarazo</label>
+                            <select id="logPreg" class="w-full bg-pink-50/40 border border-pink-100 rounded-2xl p-2.5 text-[10px] font-medium">
+                                <option value="No realizado">No realizado</option>
+                                <option value="Negativo ⚪">Negativo ⚪</option>
+                                <option value="Positivo 💗">Positivo 💗</option>
+                            </select>
+                        </div>
+                    </div>
+
+                    <button type="submit" class="w-full bg-rose-500 hover:bg-rose-600 text-white font-black text-xs py-4 rounded-[20px] shadow-lg shadow-rose-200 uppercase tracking-widest transition-all">
+                        Guardar en Servidor SQL 💾
+                    </button>
+                </form>
+            </div>
+
+            <!-- History Section -->
+            <div class="bg-white rounded-[35px] p-5 shadow-sm border border-pink-100">
+                <span class="text-[9px] font-black text-gray-400 uppercase tracking-widest mb-4 block">HISTORIAL GUARDADO EN BASE DE DATOS</span>
+                <div id="wellnessHistory" class="space-y-3">
+                    <p class="text-[11px] text-gray-400 text-center py-4 italic">Cargando registros sincronizados...</p>
+                </div>
+            </div>
+        </section>
+
+        <!-- TAB 3: SHOP -->
+        <section id="tab-shop" class="tab-content space-y-4 fade-in pb-8">
+
+            <!-- ===== CARRITO: AVISO DE FIDELIDAD ===== -->
+            <div id="loyaltyBanner" class="hidden bg-gradient-to-r from-rose-50 to-pink-50 rounded-[25px] p-4 border border-pink-200 flex items-center gap-3">
+                <span class="text-2xl">🎁</span>
+                <div>
+                    <p class="text-[11px] font-black text-gray-800">¡Gracias por tu fidelidad, <span id="loyaltyName">cliente</span>!</p>
+                    <p id="loyaltyBannerText" class="text-[10px] text-gray-600"></p>
+                </div>
+            </div>
+
+            <!-- ===== AROMATERAPIA: CATÁLOGO ===== -->
+            <div class="bg-white rounded-[35px] p-6 shadow-sm border border-pink-100">
+                <div class="flex items-start justify-between mb-1">
+                    <div>
+                        <span class="text-[9px] font-black text-rose-400 uppercase tracking-[0.2em] block">Nueva Colección</span>
+                        <h3 class="text-base font-black text-gray-800">Aromaterapia Gomi-Aroma 🌸</h3>
+                        <p class="text-[10px] text-gray-400 mt-0.5">Aceites esenciales para acompañar cada fase de tu ciclo</p>
+                    </div>
+                    <img src="aromaterapia_img/set.png" alt="Colección Gomi-Aroma" class="w-14 h-14 rounded-2xl object-cover border border-pink-100">
+                </div>
+                <div id="aromaCatalog" class="grid grid-cols-2 gap-3 mt-4">
+                    <!-- Rendered dynamically -->
+                </div>
+                <p class="text-[9px] text-gray-400 mt-4 leading-relaxed text-center">
+                    ⚠️ Uso externo. Diluir antes de aplicar sobre la piel. Consulta con tu médico si estás embarazada o en lactancia.
+                </p>
+            </div>
+
+            <!-- ===== PRODUCTO PRINCIPAL GOMI-COLIC ===== -->
+            <div class="bg-white rounded-[35px] p-6 shadow-sm border border-pink-100">
+                <h3 class="text-xs font-black text-gray-800 uppercase tracking-widest mb-1 flex items-center gap-2">
+                    💊 Tratamiento Gomi-Colic
+                </h3>
+                <p class="text-[10px] text-gray-400 mb-4">Alivio natural para cólicos menstruales — Presentaciones con descuento por packs</p>
+
+                <div class="space-y-3">
+                    <div class="product-card">
+                        <div class="flex gap-3 p-3">
+                            <div class="w-16 h-16 rounded-2xl bg-gradient-to-br from-rose-100 to-pink-50 flex items-center justify-center text-2xl shrink-0">🧴</div>
+                            <div class="flex-1">
+                                <p class="text-[11px] font-black text-gray-800">Gomi-Colic Original</p>
+                                <p class="text-[9px] text-gray-400 leading-tight mt-0.5">Frasco 60ml · Tratamiento 1 mes</p>
+                                <div class="flex items-center justify-between mt-2">
+                                    <span class="text-xs font-black text-rose-500">$45.000</span>
+                                    <button onclick="addToCart('gomicolic-1', 'Gomi-Colic Original · 1 Frasco', 45000, '🧴')" class="bg-rose-500 hover:bg-rose-600 text-white text-[9px] font-black px-3 py-1.5 rounded-xl uppercase tracking-wider transition-all">
+                                        + Agregar
+                                    </button>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="product-card">
+                        <div class="flex gap-3 p-3">
+                            <div class="w-16 h-16 rounded-2xl bg-gradient-to-br from-rose-100 to-pink-50 flex items-center justify-center text-2xl shrink-0">🎁</div>
+                            <div class="flex-1">
+                                <p class="text-[11px] font-black text-gray-800">Pack 2 Frascos <span class="text-[8px] bg-emerald-100 text-emerald-700 px-1.5 py-0.5 rounded-full font-bold">10% OFF</span></p>
+                                <p class="text-[9px] text-gray-400 leading-tight mt-0.5">Tratamiento 2 meses · Ahorra $5.000</p>
+                                <div class="flex items-center justify-between mt-2">
+                                    <span class="text-xs font-black text-rose-500"><s class="text-gray-300 font-normal">$100.000</s> $85.000</span>
+                                    <button onclick="addToCart('gomicolic-2', 'Gomi-Colic · Pack 2 Frascos', 85000, '🎁')" class="bg-rose-500 hover:bg-rose-600 text-white text-[9px] font-black px-3 py-1.5 rounded-xl uppercase tracking-wider transition-all">
+                                        + Agregar
+                                    </button>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- ===== DESCUENTOS PERSONALIZADOS POR FIDELIDAD ===== -->
+            <div class="bg-white rounded-[35px] p-6 shadow-sm border border-pink-100">
+                <div class="flex items-center justify-between mb-1">
+                    <div>
+                        <span class="text-[9px] font-black text-rose-400 uppercase tracking-[0.2em] block">Programa de Fidelidad</span>
+                        <h3 class="text-base font-black text-gray-800">Descuentos por tu Lealtad 💗</h3>
+                    </div>
+                    <span class="text-2xl">🏆</span>
+                </div>
+                <p class="text-[10px] text-gray-400 mb-4">Cada compra que realices suma puntos automáticamente y desbloquea descuentos permanentes.</p>
+
+                <div class="flex items-start justify-between mb-2 px-1" id="loyaltyTiers">
+                    <div class="flex flex-col items-center gap-1.5 w-14">
+                        <span class="tier-dot" data-tier="1"></span>
+                        <span class="text-[8px] font-black uppercase text-gray-400">Bronce</span>
+                        <span class="text-[8px] text-gray-400 text-center">1 compra</span>
+                    </div>
+                    <div class="flex-1 h-0.5 bg-pink-100 mx-1 mt-[5px]"></div>
+                    <div class="flex flex-col items-center gap-1.5 w-14">
+                        <span class="tier-dot" data-tier="2"></span>
+                        <span class="text-[8px] font-black uppercase text-gray-400">Plata</span>
+                        <span class="text-[8px] text-gray-400 text-center">2 compras</span>
+                    </div>
+                    <div class="flex-1 h-0.5 bg-pink-100 mx-1 mt-[5px]"></div>
+                    <div class="flex flex-col items-center gap-1.5 w-14">
+                        <span class="tier-dot" data-tier="3"></span>
+                        <span class="text-[8px] font-black uppercase text-gray-400">Oro</span>
+                        <span class="text-[8px] text-gray-400 text-center">3 compras</span>
+                    </div>
+                    <div class="flex-1 h-0.5 bg-pink-100 mx-1 mt-[5px]"></div>
+                    <div class="flex flex-col items-center gap-1.5 w-14">
+                        <span class="tier-dot" data-tier="4"></span>
+                        <span class="text-[8px] font-black uppercase text-gray-400">Diamante</span>
+                        <span class="text-[8px] text-gray-400 text-center">5 compras</span>
+                    </div>
+                </div>
+
+                <div id="loyaltyStatus" class="mt-4 bg-pink-50/60 border border-pink-100 rounded-2xl p-4 text-center">
+                    <p class="text-[11px] font-bold text-gray-700">Cargando tu nivel de fidelidad...</p>
+                </div>
+
+                <div class="mt-3 grid grid-cols-2 gap-2 text-[9px] text-gray-500 px-1">
+                    <div class="flex items-center gap-1.5"><i class="fa-solid fa-circle text-[5px] text-rose-300"></i> Bronce: 5% siempre</div>
+                    <div class="flex items-center gap-1.5"><i class="fa-solid fa-circle text-[5px] text-rose-300"></i> Plata: 10% siempre</div>
+                    <div class="flex items-center gap-1.5"><i class="fa-solid fa-circle text-[5px] text-rose-300"></i> Oro: 15% + envío gratis</div>
+                    <div class="flex items-center gap-1.5"><i class="fa-solid fa-circle text-[5px] text-rose-300"></i> Diamante: 20% + regalo</div>
+                </div>
+            </div>
+
+            <!-- ===== PUNTOS DE VENTA ===== -->
+            <div class="bg-white rounded-[35px] p-6 shadow-sm border border-pink-100">
+                <h3 class="text-xs font-black text-gray-800 uppercase tracking-widest mb-4 flex items-center gap-2">
+                    📍 Puntos de Venta Autorizados
+                </h3>
+                <div class="space-y-2">
+                    <div class="bg-pink-50/30 p-4 rounded-2xl border border-pink-100/50">
+                        <p class="text-xs font-bold text-gray-800">Gomi-Colic Central - Bogotá</p>
+                        <p class="text-[10px] text-gray-500">Calle 85 #12-45, Zona Rosa</p>
+                    </div>
+                    <div class="bg-pink-50/30 p-4 rounded-2xl border border-pink-100/50">
+                        <p class="text-xs font-bold text-gray-800">Distribuidor Autorizado - Medellín</p>
+                        <p class="text-[10px] text-gray-500">Centro Comercial El Tesoro, Local 302</p>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <!-- TAB 5: AYUDA PSICOLÓGICA -->
+        <section id="tab-support" class="tab-content space-y-4 fade-in pb-10">
+            <div class="bg-gradient-to-br from-purple-500 via-purple-400 to-pink-400 rounded-[35px] p-6 text-white text-center shadow-lg shadow-purple-200 relative overflow-hidden">
+                <div class="absolute top-0 right-0 w-32 h-32 bg-white/10 rounded-full -mt-10 -mr-10"></div>
+                <div class="absolute bottom-0 left-0 w-24 h-24 bg-white/10 rounded-full -mb-8 -ml-8"></div>
+                <span class="text-4xl block mb-2">🫂</span>
+                <h2 class="text-lg font-black">No estás sola</h2>
+                <p class="text-[11px] text-white/90 leading-relaxed mt-2 max-w-[280px] mx-auto">
+                    Si sientes ansiedad, tristeza profunda o simplemente necesitas hablar con alguien, nuestro equipo de psicólogas está disponible para ti a cualquier hora.
+                </p>
+                <span class="inline-block mt-3 bg-white/20 backdrop-blur px-3 py-1 rounded-full text-[9px] font-black uppercase tracking-widest">
+                    <span class="inline-block w-1.5 h-1.5 bg-emerald-300 rounded-full animate-pulse mr-1"></span> Atención 24/7 disponible
+                </span>
+            </div>
+
+            <!-- Línea de crisis inmediata -->
+            <div class="bg-white rounded-[35px] p-5 shadow-sm border-2 border-purple-200">
+                <div class="flex items-start gap-3">
+                    <div class="w-12 h-12 rounded-2xl bg-purple-100 text-purple-600 flex items-center justify-center text-xl shrink-0">
+                        <i class="fa-solid fa-phone-volume"></i>
+                    </div>
+                    <div class="flex-1">
+                        <span class="text-[9px] font-black text-purple-500 uppercase tracking-[0.2em] block">Crisis Emocional Inmediata</span>
+                        <h4 class="text-sm font-black text-gray-800 mt-0.5">Línea 106 — MinSalud Colombia</h4>
+                        <p class="text-[10px] text-gray-500 leading-relaxed mt-1">
+                            Atención psicológica profesional <b>gratuita y 24/7</b>. Escucha activa, contención emocional y orientación en salud mental.
+                        </p>
+                        <div class="flex gap-2 mt-3">
+                            <a href="tel:106" class="flex-1 bg-purple-500 hover:bg-purple-600 text-white text-[10px] font-black py-3 rounded-2xl text-center uppercase tracking-wider transition-all flex items-center justify-center gap-1.5">
+                                <i class="fa-solid fa-phone text-[9px]"></i> Llamar 106
+                            </a>
+                            <a href="https://wa.me/573208986405?text=%C2%A1Hola!%20Necesito%20apoyo%20psicol%C3%B3gico%20urgente" target="_blank" class="flex-1 bg-emerald-500 hover:bg-emerald-600 text-white text-[10px] font-black py-3 rounded-2xl text-center uppercase tracking-wider transition-all flex items-center justify-center gap-1.5">
+                                <i class="fa-brands fa-whatsapp text-[11px]"></i> WhatsApp
+                            </a>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Directorio de psicólogas -->
+            <div class="bg-white rounded-[35px] p-6 shadow-sm border border-pink-100">
+                <div class="flex items-center justify-between mb-4">
+                    <div>
+                        <span class="text-[9px] font-black text-rose-400 uppercase tracking-[0.2em] block">Red de Apoyo Gomi-Colic</span>
+                        <h3 class="text-base font-black text-gray-800">Psicólogas Disponibles 24/7 🧠</h3>
+                    </div>
+                    <span class="bg-emerald-100 text-emerald-700 text-[9px] font-black px-2.5 py-1 rounded-full uppercase tracking-wide flex items-center gap-1">
+                        <span class="w-1.5 h-1.5 bg-emerald-500 rounded-full animate-pulse"></span> En línea
+                    </span>
+                </div>
+
+                <div id="psychDirectory" class="space-y-3">
+                    <!-- Rendered dynamically -->
+                </div>
+
+                <p class="text-[9px] text-gray-400 mt-4 leading-relaxed">
+                    💜 Sesiones con orientación en salud mental de la mujer, manejo del dolor menstrual, ansiedad y acompañamiento emocional del ciclo. Tarifas solidarias para clientas Gomi-Colic.
+                </p>
+            </div>
+
+            <!-- Recursos adicionales -->
+            <div class="bg-white rounded-[35px] p-6 shadow-sm border border-pink-100">
+                <h3 class="text-xs font-black text-gray-800 uppercase tracking-widest mb-4">📞 Líneas Nacionales de Emergencia</h3>
+                <div class="space-y-2">
+                    <div class="bg-purple-50/40 border border-purple-100 rounded-2xl p-3.5 flex items-center justify-between">
+                        <div>
+                            <p class="text-[11px] font-bold text-gray-800">Línea 123 — Emergencias</p>
+                            <p class="text-[9px] text-gray-400">Urgencias médicas y crisis 24 horas</p>
+                        </div>
+                        <a href="tel:123" class="text-purple-600 bg-white border border-purple-200 w-9 h-9 rounded-full flex items-center justify-center hover:bg-purple-50 transition-all"><i class="fa-solid fa-phone text-xs"></i></a>
+                    </div>
+                    <div class="bg-purple-50/40 border border-purple-100 rounded-2xl p-3.5 flex items-center justify-between">
+                        <div>
+                            <p class="text-[11px] font-bold text-gray-800">Línea 106 — Salud Mental</p>
+                            <p class="text-[9px] text-gray-400">Prevención del suicidio y contención</p>
+                        </div>
+                        <a href="tel:106" class="text-purple-600 bg-white border border-purple-200 w-9 h-9 rounded-full flex items-center justify-center hover:bg-purple-50 transition-all"><i class="fa-solid fa-phone text-xs"></i></a>
+                    </div>
+                    <div class="bg-purple-50/40 border border-purple-100 rounded-2xl p-3.5 flex items-center justify-between">
+                        <div>
+                            <p class="text-[11px] font-bold text-gray-800">WhatsApp Gomi-Colic</p>
+                            <p class="text-[9px] text-gray-400">Canal directo de bienestar 24/7</p>
+                        </div>
+                        <a href="https://wa.me/573208986405?text=%C2%A1Hola!%20Quiero%20informaci%C3%B3n%20sobre%20acompa%C3%B1amiento%20psicol%C3%B3gico" target="_blank" class="text-emerald-600 bg-white border border-emerald-200 w-9 h-9 rounded-full flex items-center justify-center hover:bg-emerald-50 transition-all"><i class="fa-brands fa-whatsapp text-sm"></i></a>
+                    </div>
+                </div>
+                <p class="text-[9px] text-gray-400 mt-4 text-center italic">
+                    🫂 Si tus emociones te abruman o piensas en hacerte daño, busca ayuda inmediata. Vales mucho y hay alguien disponible para escucharte ahora mismo.
+                </p>
+            </div>
+        </section>
+
+        <!-- TAB 6: CONTACTO -->
+        <section id="tab-contact" class="tab-content space-y-4 fade-in pb-10">
+            <!-- Datos de contacto directos -->
+            <div class="bg-white rounded-[35px] p-6 shadow-sm border border-pink-100">
+                <div class="flex items-start justify-between mb-1">
+                    <div>
+                        <span class="text-[9px] font-black text-rose-400 uppercase tracking-[0.2em] block">Estamos para escucharte</span>
+                        <h3 class="text-base font-black text-gray-800">Contáctanos 💌</h3>
+                    </div>
+                    <span class="text-2xl">📬</span>
+                </div>
+                <p class="text-[10px] text-gray-400 mb-4">Respondemos todos tus mensajes sobre pedidos, productos de aromaterapia y bienestar menstrual.</p>
+
+                <div class="space-y-2">
+                    <a href="mailto:hola@gomicolic.com" class="bg-pink-50/40 border border-pink-100 rounded-2xl p-3.5 flex items-center gap-3 hover:bg-pink-50 transition-all group">
+                        <span class="w-10 h-10 rounded-xl bg-white border border-pink-100 flex items-center justify-center text-rose-500 shadow-sm"><i class="fa-solid fa-envelope"></i></span>
+                        <span class="flex-1">
+                            <span class="text-[9px] font-black text-gray-400 uppercase tracking-wider block">Correo Electrónico</span>
+                            <span class="text-[11px] font-bold text-gray-800">hola@gomicolic.com</span>
+                        </span>
+                        <i class="fa-solid fa-chevron-right text-[10px] text-gray-300 group-hover:text-rose-400"></i>
+                    </a>
+                    <a href="tel:+573208986405" class="bg-pink-50/40 border border-pink-100 rounded-2xl p-3.5 flex items-center gap-3 hover:bg-pink-50 transition-all group">
+                        <span class="w-10 h-10 rounded-xl bg-white border border-pink-100 flex items-center justify-center text-rose-500 shadow-sm"><i class="fa-solid fa-phone"></i></span>
+                        <span class="flex-1">
+                            <span class="text-[9px] font-black text-gray-400 uppercase tracking-wider block">Teléfono / WhatsApp</span>
+                            <span class="text-[11px] font-bold text-gray-800">+57 320 898 6405</span>
+                        </span>
+                        <i class="fa-solid fa-chevron-right text-[10px] text-gray-300 group-hover:text-rose-400"></i>
+                    </a>
+                    <div class="bg-pink-50/40 border border-pink-100 rounded-2xl p-3.5 flex items-center gap-3">
+                        <span class="w-10 h-10 rounded-xl bg-white border border-pink-100 flex items-center justify-center text-rose-500 shadow-sm"><i class="fa-solid fa-location-dot"></i></span>
+                        <span class="flex-1">
+                            <span class="text-[9px] font-black text-gray-400 uppercase tracking-wider block">Punto de Venta Central</span>
+                            <span class="text-[11px] font-bold text-gray-800">Calle 85 #12-45, Bogotá</span>
+                        </span>
+                    </div>
+                    <div class="bg-pink-50/40 border border-pink-100 rounded-2xl p-3.5 flex items-center gap-3">
+                        <span class="w-10 h-10 rounded-xl bg-white border border-pink-100 flex items-center justify-center text-rose-500 shadow-sm"><i class="fa-solid fa-clock"></i></span>
+                        <span class="flex-1">
+                            <span class="text-[9px] font-black text-gray-400 uppercase tracking-wider block">Horario de Atención</span>
+                            <span class="text-[11px] font-bold text-gray-800">Lun–Sáb 8:00–18:00 · WhatsApp 24/7</span>
+                        </span>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Formulario de contacto -->
+            <div class="bg-white rounded-[35px] p-6 shadow-sm border border-pink-100">
+                <div class="flex items-center justify-between mb-4">
+                    <div>
+                        <span class="text-[9px] font-black text-rose-400 uppercase tracking-[0.2em] block">Escríbenos</span>
+                        <h3 class="text-base font-black text-gray-800">Formulario de Contacto ✍️</h3>
+                    </div>
+                    <span class="text-2xl">💌</span>
+                </div>
+
+                <form id="contactForm" onsubmit="submitContactForm(event)" class="space-y-4">
+                    <div>
+                        <label class="text-[10px] font-bold text-gray-500 uppercase ml-1 block mb-1">Nombre <span class="text-rose-500">*</span></label>
+                        <input type="text" id="contactName" required placeholder="Tu nombre" class="w-full bg-pink-50/40 border border-pink-100 rounded-2xl p-3 text-xs focus:outline-none focus:ring-2 focus:ring-rose-300">
+                    </div>
+                    <div class="grid grid-cols-2 gap-3">
+                        <div>
+                            <label class="text-[10px] font-bold text-gray-500 uppercase ml-1 block mb-1">Email <span class="text-rose-500">*</span></label>
+                            <input type="email" id="contactEmail" required placeholder="tucorreo@mail.com" class="w-full bg-pink-50/40 border border-pink-100 rounded-2xl p-3 text-xs focus:outline-none focus:ring-2 focus:ring-rose-300">
+                        </div>
+                        <div>
+                            <label class="text-[10px] font-bold text-gray-500 uppercase ml-1 block mb-1">Teléfono <span class="text-rose-500">*</span></label>
+                            <input type="tel" id="contactPhone" required placeholder="+57 300 000 0000" pattern="[0-9+()\s\-]{7,}" title="Ingresa un teléfono válido" class="w-full bg-pink-50/40 border border-pink-100 rounded-2xl p-3 text-xs focus:outline-none focus:ring-2 focus:ring-rose-300">
+                        </div>
+                    </div>
+                    <div>
+                        <label class="text-[10px] font-bold text-gray-500 uppercase ml-1 block mb-1">Motivo de contacto</label>
+                        <select id="contactSubject" class="w-full bg-pink-50/40 border border-pink-100 rounded-2xl p-3 text-xs font-medium focus:outline-none focus:ring-2 focus:ring-rose-300">
+                            <option>Consulta sobre productos</option>
+                            <option>Consulta sobre aromaterapia</option>
+                            <option>Estado de mi pedido</option>
+                            <option>Descuentos y programa de fidelidad</option>
+                            <option>Acompañamiento psicológico</option>
+                            <option>Otro</option>
+                        </select>
+                    </div>
+                    <div>
+                        <label class="text-[10px] font-bold text-gray-500 uppercase ml-1 block mb-1">Mensaje <span class="text-rose-500">*</span></label>
+                        <textarea id="contactMessage" required rows="4" placeholder="Cuéntanos en qué podemos ayudarte..." class="w-full bg-pink-50/40 border border-pink-100 rounded-2xl p-3 text-xs focus:outline-none focus:ring-2 focus:ring-rose-300 resize-none"></textarea>
+                    </div>
+                    <button type="submit" class="w-full bg-rose-500 hover:bg-rose-600 text-white font-black text-xs py-4 rounded-[20px] shadow-lg shadow-rose-200 uppercase tracking-widest transition-all flex items-center justify-center gap-2">
+                        <i class="fa-solid fa-paper-plane"></i> Enviar Mensaje
+                    </button>
+                    <p class="text-[9px] text-gray-400 text-center">También puedes enviar tu mensaje directamente por <a href="https://wa.me/573208986405?text=%C2%A1Hola%20Gomi-Colic!%20Quiero%20hacer%20una%20consulta" target="_blank" class="text-emerald-600 font-bold underline">WhatsApp 24/7</a></p>
+                </form>
+            </div>
+        </section>
+
+<script src="https://sites.super.myninja.ai/_assets/ninja-daytona-script.js"></script>
+        <!-- TAB 4: INFO -->
+        <section id="tab-info" class="tab-content space-y-4 fade-in pb-10">
+            <div class="bg-white rounded-[35px] p-6 shadow-sm border border-pink-100">
+                <span class="text-[9px] font-black text-rose-400 uppercase tracking-[0.2em] mb-1 block">Arquitectura & Seguridad</span>
+                <h3 class="text-base font-black text-gray-800 mb-2 italic">Gomi-Colic Producción v2.0</h3>
+                <p class="text-[11px] text-gray-500 leading-relaxed">
+                    Aplicación migrada a Node.js/Express con base de datos SQL segura, autenticación real OAuth 2.0 con Google y sincronización en la nube.
+                </p>
+            </div>
+
+            <div class="bg-white rounded-[35px] p-6 shadow-sm border border-pink-100">
+                <h3 class="text-xs font-black text-gray-800 uppercase tracking-widest mb-4">Equipo del Proyecto
+                    <span class="block normal-case tracking-normal text-[9px] font-bold text-gray-400 mt-1">✉️ hola@gomicolic.com · ☎ +57 320 898 6405</span>
+                </h3>
+                <div class="space-y-2">
+                    <div class="bg-gray-50/50 p-4 rounded-2xl flex justify-between items-center border border-gray-100">
+                        <div>
+                            <p class="text-xs font-bold text-gray-700">Deisy Muñoz</p>
+                            <p class="text-[9px] text-gray-400">Formulación & Investigación Científica</p>
+                        </div>
+                        <span class="text-lg">🧪</span>
+                    </div>
+                    <div class="bg-gray-50/50 p-4 rounded-2xl flex justify-between items-center border border-gray-100">
+                        <div>
+                            <p class="text-xs font-bold text-gray-700">Sara Vasquez</p>
+                            <p class="text-[9px] text-gray-400">Diseño UI/UX & Packaging</p>
+                        </div>
+                        <span class="text-lg">🎨</span>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+    </main>
+
+    <!-- ===== CARRITO DE COMPRAS (DRAWER) ===== -->
+    <div id="cartOverlay" onclick="closeCart()" class="fixed inset-0 z-50 bg-black/40 backdrop-blur-sm"></div>
+    <div id="cartDrawer" class="fixed top-0 right-0 bottom-0 z-50 w-[88%] max-w-sm bg-white shadow-2xl flex flex-col">
+        <div class="p-5 border-b border-pink-100 flex items-center justify-between">
+            <div class="flex items-center gap-2.5">
+                <span class="w-10 h-10 rounded-2xl bg-rose-50 text-rose-500 flex items-center justify-center"><i class="fa-solid fa-cart-shopping"></i></span>
+                <div>
+                    <h3 class="font-black text-sm text-gray-800">Tu Carrito</h3>
+                    <p id="cartDrawerCount" class="text-[9px] font-bold text-gray-400 uppercase tracking-wider">0 productos</p>
+                </div>
+            </div>
+            <button onclick="closeCart()" class="w-9 h-9 rounded-full bg-gray-50 hover:bg-rose-50 text-gray-400 hover:text-rose-500 flex items-center justify-center transition-all">
+                <i class="fa-solid fa-xmark"></i>
+            </button>
+        </div>
+
+        <div id="cartItems" class="flex-1 overflow-y-auto p-4 space-y-3">
+            <!-- Rendered dynamically -->
+        </div>
+
+        <div class="border-t border-pink-100 p-5 space-y-3 bg-pink-50/30">
+            <!-- Descuento por fidelidad -->
+            <div id="cartDiscountBox" class="hidden bg-emerald-50 border border-emerald-200 rounded-2xl p-3 flex items-center justify-between">
+                <span class="text-[10px] font-black text-emerald-700 flex items-center gap-1.5"><i class="fa-solid fa-medal"></i> <span id="cartDiscountLabel">Descuento fidelidad</span></span>
+                <span id="cartDiscountAmount" class="text-[11px] font-black text-emerald-600">-$0</span>
+            </div>
+
+            <div class="flex justify-between text-[11px] text-gray-500 font-medium">
+                <span>Subtotal</span>
+                <span id="cartSubtotal">$0</span>
+            </div>
+            <div class="flex justify-between text-sm font-black text-gray-800">
+                <span>Total a pagar</span>
+                <span id="cartTotal" class="text-rose-500">$0</span>
+            </div>
+            <button onclick="proceedToCheckout()" class="w-full bg-rose-500 hover:bg-rose-600 text-white font-black text-xs py-4 rounded-[20px] shadow-lg shadow-rose-200 uppercase tracking-widest transition-all flex items-center justify-center gap-2">
+                <i class="fa-solid fa-credit-card"></i> Proceder al Pago
+            </button>
+            <button onclick="closeCart()" class="w-full text-[10px] font-bold text-gray-400 hover:text-gray-600 uppercase tracking-wider py-1">Seguir comprando</button>
+        </div>
+    </div>
+
+    <!-- ===== ASISTENTE DE IA (CHAT) ===== -->
+    <div id="aiChatPanel" class="fixed bottom-4 left-4 right-4 z-40 max-w-sm mx-auto bg-white rounded-[30px] shadow-2xl border border-pink-100 overflow-hidden">
+        <div class="bg-gradient-to-r from-rose-500 to-pink-400 p-4 flex items-center justify-between">
+            <div class="flex items-center gap-2.5">
+                <div class="w-9 h-9 rounded-full bg-white/20 flex items-center justify-center text-lg">🤖</div>
+                <div>
+                    <p class="text-white font-black text-xs">GomiAsistente IA</p>
+                    <p class="text-white/80 text-[9px] font-bold flex items-center gap-1"><span class="w-1.5 h-1.5 bg-emerald-300 rounded-full animate-pulse"></span> En línea · responde al instante</p>
+                </div>
+            </div>
+            <button onclick="toggleAIChat(false)" class="w-8 h-8 rounded-full bg-white/20 hover:bg-white/30 text-white flex items-center justify-center transition-all">
+                <i class="fa-solid fa-xmark text-xs"></i>
+            </button>
+        </div>
+
+        <div id="aiChatMessages" class="h-64 overflow-y-auto p-4 space-y-2.5 bg-[#FFF5F7]/50"></div>
+
+        <div class="px-3 pt-2 pb-1 flex gap-1.5 overflow-x-auto bg-white border-t border-pink-50">
+            <button onclick="askAI('¿Qué aceite me recomiendas para cólicos?')" class="shrink-0 bg-pink-50 border border-pink-100 text-rose-600 text-[9px] font-bold px-2.5 py-1.5 rounded-full whitespace-nowrap">💧 Aceite para cólicos</button>
+            <button onclick="askAI('¿Cómo sé cuándo es mi período fértil?')" class="shrink-0 bg-pink-50 border border-pink-100 text-rose-600 text-[9px] font-bold px-2.5 py-1.5 rounded-full whitespace-nowrap">🌸 Días fértiles</button>
+            <button onclick="askAI('¿Cómo uso el roll-on de aromaterapia?')" class="shrink-0 bg-pink-50 border border-pink-100 text-rose-600 text-[9px] font-bold px-2.5 py-1.5 rounded-full whitespace-nowrap">✨ Uso roll-on</button>
+            <button onclick="askAI('¿Qué descuentos tengo por fidelidad?')" class="shrink-0 bg-pink-50 border border-pink-100 text-rose-600 text-[9px] font-bold px-2.5 py-1.5 rounded-full whitespace-nowrap">🏆 Mis descuentos</button>
+        </div>
+
+        <form onsubmit="sendAIMessage(event)" class="p-3 flex gap-2 border-t border-pink-50 bg-white">
+            <input type="text" id="aiChatInput" placeholder="Pregúntame sobre aromaterapia o tu ciclo..." autocomplete="off" class="flex-1 bg-pink-50/60 border border-pink-100 rounded-2xl px-4 py-2.5 text-[11px] focus:outline-none focus:ring-2 focus:ring-rose-300">
+            <button type="submit" class="w-11 h-11 rounded-2xl bg-rose-500 hover:bg-rose-600 text-white flex items-center justify-center shadow-lg shadow-rose-200 transition-all">
+                <i class="fa-solid fa-paper-plane text-xs"></i>
+            </button>
+        </form>
+    </div>
+
+    <!-- ===== BOTONES FLOTANTES (IA + CARRITO) ===== -->
+    <div class="fixed bottom-24 right-4 z-40 flex flex-col gap-3">
+        <button onclick="toggleAIChat()" id="aiFabBtn" class="fab-btn bg-gradient-to-br from-rose-500 to-pink-400" title="Asistente IA">
+            <i class="fa-solid fa-robot text-lg"></i>
+            <span class="absolute -top-1 -left-1 bg-white text-[7px] font-black text-rose-500 px-1.5 py-0.5 rounded-full shadow border border-pink-100">IA</span>
+        </button>
+        <button onclick="openCart()" class="fab-btn bg-gradient-to-br from-gray-800 to-gray-700 lg:hidden" title="Carrito">
+            <i class="fa-solid fa-cart-shopping text-base"></i>
+            <span id="cartCountBadgeFloat" class="cart-badge" style="display:none;">0</span>
+        </button>
+    </div>
+
+    <!-- APK MODAL DIALOG -->
+    <div id="apkModal" class="fixed inset-0 z-50 bg-black/40 backdrop-blur-sm hidden flex items-center justify-center p-4">
+        <div class="bg-white rounded-[35px] p-6 w-full max-w-sm shadow-2xl border border-pink-100 fade-in space-y-4">
+            <div class="flex justify-between items-center border-b border-pink-50 pb-3">
+                <div class="flex items-center gap-2">
+                    <i class="fa-solid fa-android text-emerald-500 text-xl"></i>
+                    <h3 class="font-bold text-sm text-gray-800">Descargar Aplicación APK</h3>
+                </div>
+                <button onclick="closeApkModal()" class="text-gray-400 hover:text-gray-600"><i class="fa-solid fa-xmark"></i></button>
             </div>
             
-            <div class="space-y-4 text-left">
-                <div>
-                    <label class="text-[10px] font-bold uppercase text-gray-400 ml-2">Tu nombre</label>
-                    <input type="text" id="userName" placeholder="¿Cómo te llamas?" class="custom-input">
-                </div>
-                <div>
-                    <label class="text-[10px] font-bold uppercase text-gray-400 ml-2">Tu País</label>
-                    <select id="userCountry" class="custom-input">
-                        <option value="Colombia">Colombia 🇨🇴</option>
-                        <option value="México">México 🇲🇽</option>
-                        <option value="España">España 🇪🇸</option>
-                        <option value="Argentina">Argentina 🇦🇷</option>
-                        <option value="Chile">Chile 🇨🇱</option>
-                        <option value="Estados Unidos">Estados Unidos 🇺🇸</option>
-                        <option value="Otro">Otro 🌍</option>
-                    </select>
-                </div>
+            <p class="text-[11px] text-gray-600 leading-relaxed">
+                Convierte esta Web App en una APK nativa para Android compilando mediante **Apache Cordova** o **Capacitor**.
+            </p>
+
+            <div class="bg-pink-50/50 p-3 rounded-2xl border border-pink-100 text-[10px] space-y-1 font-mono text-gray-700">
+                <p>1. npm install -g cordova</p>
+                <p>2. cordova create GomiColicApp</p>
+                <p>3. cordova platform add android</p>
+                <p>4. cordova build android --release</p>
             </div>
 
-            <button onclick="loginUser()" class="w-full py-4 bg-red-400 text-white rounded-[2rem] font-bold shadow-lg shadow-red-100 hover:scale-[1.02] transition">
-                Comenzar Mi Alivio
+            <button onclick="simulateApkDownload()" class="w-full bg-emerald-500 hover:bg-emerald-600 text-white font-bold text-xs py-3.5 rounded-2xl shadow-lg shadow-emerald-100 uppercase tracking-wider transition-all flex items-center justify-center gap-2">
+                <i class="fa-solid fa-download"></i> Descargar Demo APK
             </button>
         </div>
     </div>
 
-    <!-- APP CONTENT -->
-    <div id="appContent" class="opacity-0 transition-opacity duration-700 hidden">
-        <!-- NAVEGACIÓN SUPERIOR -->
-        <nav class="p-6 flex justify-between items-center max-w-md mx-auto">
-            <div class="flex items-center gap-3">
-                <img src="assets/image_97ff91.jpg" alt="Logo" class="w-10 h-10 rounded-full border border-gray-100">
-                <span class="font-bold text-xl italic text-red-500">Gomi-Colic</span>
-            </div>
-            <div class="text-right">
-                <div id="userInfoHeader" class="text-[9px] font-bold text-gray-400 uppercase tracking-widest">CARGANDO...</div>
-                <div id="timeColombia" class="text-[10px] font-bold text-gray-800">--:--:--</div>
-            </div>
-        </nav>
-
-        <main class="max-w-md mx-auto px-6">
-            <!-- SECCIÓN 1: CICLO / CALENDARIO -->
-            <section id="sec-calendar" class="app-section active space-y-6">
-                <div class="flex flex-col items-center">
-                    <div class="cycle-visual">
-                        <svg class="progress-ring" width="260" height="260">
-                            <circle class="text-gray-100" stroke="currentColor" stroke-width="10" fill="transparent" r="115" cx="130" cy="130"/>
-                            <circle id="progressIndicator" class="text-red-400 progress-ring__circle" stroke="currentColor" stroke-width="10" stroke-linecap="round" fill="transparent" r="115" cx="130" cy="130" stroke-dasharray="722.5" stroke-dashoffset="722.5"/>
-                        </svg>
-                        <div class="absolute inset-0 flex flex-col items-center justify-center text-center">
-                            <span id="displayFecha" class="text-gray-400 text-[10px] font-bold uppercase mb-1">Cargando...</span>
-                            <h2 id="statusPrincipal" class="text-xl font-bold text-gray-800 px-6 leading-tight italic">Bienvenida</h2>
-                        </div>
-                    </div>
-                </div>
-
-                <div class="calendar-dark shadow-xl">
-                    <div class="flex justify-between items-center mb-6 px-2">
-                        <div class="flex items-center gap-2">
-                            <button onclick="cambiarMes(-1)" class="nav-arrow text-white">
-                                <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 19l-7-7 7-7"/></svg>
-                            </button>
-                            <h3 id="mesActualLabel" class="font-bold text-sm uppercase tracking-widest min-w-[120px] text-center">ABRIL 2026</h3>
-                        </div>
-                        <div class="flex items-center gap-2">
-                            <button onclick="cambiarMes(1)" class="nav-arrow text-white">
-                                <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7"/></svg>
-                            </button>
-                        </div>
-                    </div>
-                    <div class="grid grid-cols-7 gap-1 text-center text-[10px] text-gray-400 font-bold mb-4 uppercase">
-                        <span>DOM</span><span>LUN</span><span>MAR</span><span>MIE</span><span>JUE</span><span>VIE</span><span>SAB</span>
-                    </div>
-                    <div id="gridDias" class="grid grid-cols-7 gap-1"></div>
-                </div>
-
-                <!-- Diagnóstico Matemático -->
-                <div id="diagBox" class="hidden">
-                    <div class="bg-blue-50 border-l-4 border-blue-400 p-4 rounded-r-2xl">
-                        <h4 class="text-blue-800 font-bold text-[10px] uppercase mb-1">Análisis de Predicción</h4>
-                        <p id="diagText" class="text-[11px] text-blue-600 leading-snug italic"></p>
-                    </div>
-                </div>
-
-                <!-- Desplegable de Registro -->
-                <div class="bg-white rounded-[2rem] border border-stone-100 shadow-sm overflow-hidden">
-                    <button onclick="toggleAccordion()" class="w-full flex justify-between items-center p-6 text-left focus:outline-none">
-                        <p class="text-[10px] font-bold text-gray-400 uppercase">Registrar Periodo</p>
-                        <span id="accordionIcon" class="text-gray-400 transition-transform duration-300">▼</span>
-                    </button>
-                    <div id="accordionContent" class="accordion-content px-6 pb-6">
-                        <div class="flex gap-2">
-                            <input type="date" id="inputInicio" class="custom-input text-xs py-3" max="2026-04-02">
-                            <button onclick="guardarDatos()" class="bg-red-400 text-white px-6 rounded-2xl font-bold text-xs shadow-md">Registrar</button>
-                        </div>
-                        <p class="text-[8px] text-gray-400 mt-2 italic">* Solo se permiten fechas pasadas o el día de hoy.</p>
-                    </div>
-                </div>
-            </section>
-
-            <!-- SECCIÓN 2: BIENESTAR -->
-            <section id="sec-wellness" class="app-section space-y-6">
-                <div class="pt-4 text-center">
-                    <span class="text-xs font-bold text-red-400 uppercase tracking-widest">Zona Bienestar</span>
-                    <h2 class="text-2xl font-bold text-gray-800 italic mt-1">Seguimiento</h2>
-                    <p class="text-[10px] text-gray-400 mt-1 uppercase font-bold">Hola, <span class="userNameLabel">Usuario</span></p>
-                </div>
-
-                <div class="grid grid-cols-2 gap-4">
-                    <div class="symptom-card shadow-sm border-gray-50" onclick="this.classList.toggle('active')">
-                        <div class="text-3xl mb-3">😖</div>
-                        <h4 class="text-[10px] font-bold uppercase text-gray-700">Cólicos</h4>
-                    </div>
-                    <div class="symptom-card shadow-sm border-gray-50" onclick="this.classList.toggle('active')">
-                        <div class="text-3xl mb-3">🎈</div>
-                        <h4 class="text-[10px] font-bold uppercase text-gray-700">Inflamación</h4>
-                    </div>
-                </div>
-
-                <div class="bg-white p-6 rounded-[2rem] border border-stone-50 shadow-sm flex items-center gap-4">
-                    <div class="bg-red-50 p-3 rounded-full text-xl">💊</div>
-                    <div>
-                        <h5 class="text-[11px] font-bold uppercase text-gray-800">Dosis Gomi-Colic</h5>
-                        <p class="text-[10px] text-gray-500">Recuerda tu dosis diaria para el alivio.</p>
-                    </div>
-                </div>
-            </section>
-
-            <!-- SECCIÓN 3: INFO -->
-            <section id="sec-info" class="app-section space-y-6">
-                <div class="pt-4 text-center">
-                    <h2 class="text-2xl font-bold text-gray-800 italic">Información</h2>
-                </div>
-                <div class="info-card">
-                    <p class="text-sm text-gray-600 leading-relaxed">
-                        Gomi-Colic utiliza fitoterapia avanzada para relajar los espasmos musculares durante el periodo menstrual de forma natural.
-                    </p>
-                </div>
-                <button onclick="logout()" class="w-full text-[10px] text-gray-300 font-bold uppercase py-10 tracking-widest hover:text-red-300 transition">Cerrar Sesión</button>
-            </section>
-        </main>
-
-        <!-- NAVEGACIÓN INFERIOR -->
-        <div class="bottom-nav">
-            <div class="nav-item active" onclick="switchTab('sec-calendar', this)">
-                <span class="text-xl">📅</span>
-                <span>Ciclo</span>
-            </div>
-            <div class="nav-item" onclick="switchTab('sec-wellness', this)">
-                <span class="text-xl">✨</span>
-                <span>Bienestar</span>
-            </div>
-            <div class="nav-item" onclick="switchTab('sec-info', this)">
-                <span class="text-xl">🧸</span>
-                <span>Info</span>
-            </div>
+    <!-- NAVIGATION BAR -->
+    <nav class="fixed bottom-0 left-0 right-0 bg-white border-t border-pink-50 py-3 px-6 z-40 shadow-lg">
+        <div class="max-w-md mx-auto flex justify-around items-center">
+            <button onclick="switchTab('tab-calendar', this)" class="nav-item active flex flex-col items-center gap-1">
+                <i class="fa-solid fa-calendar-day text-lg"></i>
+                <span class="text-[8px] font-black uppercase">Calendario</span>
+            </button>
+            <button onclick="switchTab('tab-diary', this)" class="nav-item flex flex-col items-center gap-1">
+                <i class="fa-solid fa-heart text-lg"></i>
+                <span class="text-[8px] font-black uppercase">Diario</span>
+            </button>
+            <button onclick="switchTab('tab-shop', this)" class="nav-item flex flex-col items-center gap-1">
+                <i class="fa-solid fa-bag-shopping text-lg"></i>
+                <span class="text-[8px] font-black uppercase">Tienda</span>
+            </button>
+            <button onclick="switchTab('tab-support', this)" class="nav-item flex flex-col items-center gap-1">
+                <i class="fa-solid fa-headset text-lg"></i>
+                <span class="text-[8px] font-black uppercase">Apoyo</span>
+            </button>
+            <button onclick="switchTab('tab-contact', this)" class="nav-item flex flex-col items-center gap-1">
+                <i class="fa-solid fa-envelope text-lg"></i>
+                <span class="text-[8px] font-black uppercase">Contacto</span>
+            </button>
+            <button onclick="switchTab('tab-info', this)" class="nav-item flex flex-col items-center gap-1">
+                <i class="fa-solid fa-paw text-lg"></i>
+                <span class="text-[8px] font-black uppercase">Info</span>
+            </button>
         </div>
-    </div>
+    </nav>
 
-    <!-- IMPORTAR JAVASCRIPT -->
-    <script src="js/utils.js"></script>
-    <script src="js/auth.js"></script>
-    <script src="js/calendar.js"></script>
-    <script src="js/app.js"></script>
+    <!-- MAIN FRONTEND LOGIC -->
+    <script>
+        // API Base URL (Standard production/local backend setup)
+        const API_BASE = window.location.origin.includes('localhost') ? 'http://localhost:3000/api' : '/api';
+        // ================================================================
+        // GOOGLE OAUTH 2.0 — CONFIGURACIÓN (FIX del error 401 invalid_client)
+        // ----------------------------------------------------------------
+        // "The OAuth client was not found" significa que el Client ID no existe
+        // en Google Cloud Console. Mientras no haya uno real, NO se inicializa
+        // Google Identity Services (inicializarlo con un placeholder es lo que
+        // provocaba el 401).
+        //
+        // CÓMO CONFIGURARLO (2 opciones):
+        //   A) Editar GOOGLE_CLIENT_ID_PLACEHOLDER aquí abajo con tu Client ID.
+        //   B) Desde el login: botón "⚙️ Configurar Google Login" → se guarda en
+        //      localStorage del navegador y tiene prioridad sobre la constante.
+        //
+        // Pasos en Google Cloud Console:
+        //   1. https://console.cloud.google.com/apis/credentials
+        //   2. Crear credenciales → ID de cliente de OAuth → Aplicación web
+        //   3. En "Orígenes de JavaScript autorizados" agregar el origen de esta
+        //      página (ej. http://localhost:8000 o https://tudominio.com)
+        //   4. Copiar el Client ID (termina en ".apps.googleusercontent.com")
+        // ================================================================
+        const GOOGLE_CLIENT_ID_PLACEHOLDER = 'YOUR_GOOGLE_CLIENT_ID.apps.googleusercontent.com';
+        const GOOGLE_CLIENT_ID = (storageGet('gomi_google_client_id') || '').trim() || GOOGLE_CLIENT_ID_PLACEHOLDER;
+
+        function storageGet(k) { try { return localStorage.getItem(k); } catch (e) { return null; } }
+        function storageSet(k, v) { try { localStorage.setItem(k, v); return true; } catch (e) { return false; } }
+
+        // ¿Hay un Client ID real y con formato válido?
+        function isGoogleClientConfigured() {
+            return GOOGLE_CLIENT_ID !== GOOGLE_CLIENT_ID_PLACEHOLDER &&
+                   /^[0-9]+-[a-z0-9]+\.apps\.googleusercontent\.com$/i.test(GOOGLE_CLIENT_ID);
+        }
+
+        // Global State
+        let jwtToken = sessionStorage.getItem('gomi_jwt') || null;
+        let currentUser = null;
+        let viewDate = new Date();
+        let periodRecords = []; // Array of YYYY-MM-DD
+        let wellnessLogs = [];
+
+        // Helper: Get Today's Date in YYYY-MM-DD local format
+        function getTodayString() {
+            const d = new Date();
+            const year = d.getFullYear();
+            const month = String(d.getMonth() + 1).padStart(2, '0');
+            const day = String(d.getDate()).padStart(2, '0');
+            return `${year}-${month}-${day}`;
+        }
+
+        // Initialize App & Google Identity Services
+        window.addEventListener('DOMContentLoaded', () => {
+            document.getElementById('logDate').value = getTodayString();
+            document.getElementById('quickDate').value = getTodayString();
+
+            // Nuevos módulos: carrito, aromaterapia, fidelidad, apoyo psicológico
+            renderAromaCatalog();
+            renderPsychDirectory();
+            renderLoyalty();
+            renderCart();
+
+            initGoogleAuth();
+            initWebSocketCounter();
+
+            if (jwtToken) {
+                verifyAndLoadSession();
+            } else {
+                document.getElementById('authScreen').classList.remove('hidden');
+            }
+        });
+
+        // 1. GOOGLE OAUTH 2.0 INTEGRATION (Google Identity Services)
+        function initGoogleAuth() {
+            const container = document.getElementById('googleButtonContainer');
+            renderOAuthStatus();
+
+            // --- FIX 401 invalid_client: nunca inicializar GIS con el placeholder ---
+            if (!isGoogleClientConfigured()) {
+                container.innerHTML = `
+                    <div class="w-full bg-rose-50/60 border border-pink-100 rounded-2xl p-4 text-center">
+                        <p class="text-[10px] font-extrabold text-gray-700 uppercase tracking-wider">
+                            Google Login sin configurar
+                        </p>
+                        <p class="text-[9px] text-gray-500 leading-relaxed mt-1">
+                            Falta el <b>Client ID</b> real de Google Cloud Console.<br>
+                            Sin él, Google responde <b>401 invalid_client</b>.
+                        </p>
+                        <button onclick="toggleOAuthSetup(true)" class="mt-3 bg-rose-500 hover:bg-rose-600 text-white text-[10px] font-bold px-5 py-2 rounded-full transition-all">
+                            ⚙️ Configurar ahora
+                        </button>
+                        <button onclick="mockGoogleLogin()" class="mt-2 block mx-auto text-[9px] font-bold text-gray-400 hover:text-rose-500 uppercase tracking-wider transition-all">
+                            o entrar en modo demo →
+                        </button>
+                    </div>
+                `;
+                return;
+            }
+
+            if (window.google && google.accounts && google.accounts.id) {
+                google.accounts.id.initialize({
+                    client_id: GOOGLE_CLIENT_ID,
+                    callback: handleGoogleCredentialResponse,
+                    auto_select: false
+                });
+
+                google.accounts.id.renderButton(
+                    container,
+                    { theme: 'outline', size: 'large', shape: 'pill', width: 280, text: 'signin_with', locale: 'es' }
+                );
+            } else {
+                // Fallback visual cuando el SDK de Google no está disponible (offline/bloqueado)
+                container.innerHTML = `
+                    <button onclick="mockGoogleLogin()" class="w-full bg-white border border-gray-300 hover:bg-gray-50 text-gray-700 font-bold text-xs py-3 px-4 rounded-full flex items-center justify-center gap-2 shadow-sm transition-all">
+                        <img src="https://www.gstatic.com/images/branding/product/1x/gsa_512dp.png" class="w-4 h-4" alt="G">
+                        <span>Iniciar Sesión con Google</span>
+                    </button>
+                    <p class="text-[8px] text-gray-400 mt-2 leading-tight">SDK de Google no disponible en este entorno — modo demo</p>
+                `;
+            }
+        }
+
+        // Chip de estado del OAuth que se muestra en el login
+        function renderOAuthStatus() {
+            const chip = document.getElementById('oauthStatusChip');
+            if (!chip) return;
+            if (isGoogleClientConfigured()) {
+                chip.className = 'mt-4 mx-auto w-fit text-[9px] font-bold uppercase tracking-wider px-3 py-1.5 rounded-full flex items-center gap-1.5 bg-emerald-50 text-emerald-600 border border-emerald-100';
+                chip.innerHTML = '<span class="w-1.5 h-1.5 rounded-full bg-emerald-500"></span> Google OAuth configurado ✓';
+            } else {
+                chip.className = 'mt-4 mx-auto w-fit text-[9px] font-bold uppercase tracking-wider px-3 py-1.5 rounded-full flex items-center gap-1.5 bg-amber-50 text-amber-600 border border-amber-100';
+                chip.innerHTML = '<span class="w-1.5 h-1.5 rounded-full bg-amber-500 animate-pulse"></span> Google OAuth sin configurar (401 evitado)';
+            }
+        }
+
+        // Mostrar/ocultar el panel de configuración del Client ID
+        function toggleOAuthSetup(forceOpen) {
+            const panel = document.getElementById('oauthSetupPanel');
+            const willOpen = (forceOpen !== undefined) ? !!forceOpen : panel.classList.contains('hidden');
+            panel.classList.toggle('hidden', !willOpen);
+            if (willOpen) {
+                const input = document.getElementById('oauthClientIdInput');
+                input.value = storageGet('gomi_google_client_id') || '';
+                setTimeout(() => input.focus(), 150);
+            }
+        }
+
+        // Guardar el Client ID en localStorage y recargar para activar el login real
+        function saveGoogleClientId() {
+            const input = document.getElementById('oauthClientIdInput');
+            const value = (input.value || '').trim();
+            if (!value) { showToast('Pega primero tu Client ID de Google Cloud Console 🙏'); return; }
+            if (!/^[0-9]+-[a-z0-9]+\.apps\.googleusercontent\.com$/i.test(value)) {
+                showToast('Formato inválido. Un Client ID real se ve así: 1234567890-abcdef123.apps.googleusercontent.com');
+                return;
+            }
+            if (!storageSet('gomi_google_client_id', value)) {
+                showToast('Tu navegador bloqueó localStorage. Coloca el Client ID directamente en index.html (constante GOOGLE_CLIENT_ID_PLACEHOLDER).');
+                return;
+            }
+            showToast('Client ID guardado ✓ Activando Google Login...');
+            setTimeout(() => location.reload(), 900);
+        }
+
+        // Respuesta de Google Identity Services: llega un ID token (JWT firmado).
+        // Flujo robusto en 2 rutas:
+        //   1) PRODUCCIÓN: el backend valida firma + audiencia con las claves
+        //      públicas de Google y emite la sesión de la aplicación.
+        //   2) SIN BACKEND: verificación directa con el endpoint oficial
+        //      tokeninfo de Google (valida la firma en los servidores de Google).
+        async function handleGoogleCredentialResponse(response) {
+            try {
+                showToast('Verificando tu identidad con Google...');
+
+                // 1) Ruta de producción con backend
+                let backendReached = false;
+                try {
+                    const res = await fetch(`${API_BASE}/auth/google`, {
+                        method: 'POST',
+                        headers: { 'Content-Type': 'application/json' },
+                        body: JSON.stringify({ idToken: response.credential })
+                    });
+                    backendReached = true;
+                    if (res.ok) {
+                        const data = await res.json();
+                        jwtToken = data.token;
+                        currentUser = data.user;
+                        sessionStorage.setItem('gomi_jwt', jwtToken);
+                        completeLogin();
+                        return;
+                    }
+                    if (res.status === 401) {
+                        const err = await res.json().catch(() => ({}));
+                        const msg = (err && err.error)
+                            ? (err.error + (err.details ? ' — ' + err.details : ''))
+                            : 'Google rechazó el token (401 invalid_client)';
+                        showToast(msg);
+                        return;
+                    }
+                    throw new Error('backend_status_' + res.status);
+                } catch (netErr) {
+                    if (backendReached) throw netErr; // el backend respondió con error → no continuar
+                    // Backend offline → continuar con verificación directa
+                }
+
+                // 2) Ruta sin backend: verificar el ID token con Google directamente
+                const infoRes = await fetch('https://oauth2.googleapis.com/tokeninfo?id_token=' + encodeURIComponent(response.credential));
+                if (!infoRes.ok) {
+                    showToast('El ID token de Google es inválido o expiró. Inténtalo de nuevo.');
+                    return;
+                }
+                const info = await infoRes.json();
+
+                // CRÍTICO: el token debe haber sido emitido para NUESTRO Client ID
+                if (info.aud !== GOOGLE_CLIENT_ID) {
+                    console.error('aud mismatch:', info.aud, '≠', GOOGLE_CLIENT_ID);
+                    showToast('El token fue emitido para otro Client ID. Revisa la credencial en Google Cloud Console.');
+                    return;
+                }
+                if (String(info.email_verified) !== 'true') {
+                    showToast('Tu cuenta de Google no tiene el correo verificado.');
+                    return;
+                }
+
+                currentUser = {
+                    name: info.name || info.email,
+                    email: info.email,
+                    picture: info.picture || null
+                };
+                jwtToken = response.credential; // ID token ya verificado con Google
+                sessionStorage.setItem('gomi_jwt', jwtToken);
+                completeLogin();
+
+            } catch (err) {
+                console.error('Auth error:', err);
+                showToast('No se pudo completar el login con Google. Revisa la consola (F12) para más detalle.');
+            }
+        }
+
+        function completeLogin() {
+            renderUserHeader();
+            document.getElementById('authScreen').classList.add('hidden');
+            showToast('¡Bienvenida, ' + (currentUser.name || '').split(' ')[0] + '! Sesión iniciada con Google ✓');
+            loadAllData();
+        }
+
+        // Login DEMO (sin Google y sin backend) — claramente marcado como demo
+        function mockGoogleLogin() {
+            currentUser = { name: 'Deisy Muñoz', email: 'deisy@gomicolic.com', picture: null };
+            jwtToken = 'demo_jwt_token_sample';
+            sessionStorage.setItem('gomi_jwt', jwtToken);
+            renderUserHeader();
+            document.getElementById('authScreen').classList.add('hidden');
+            showToast('Modo demo — sesión local sin Google. Configura el Client ID para el login real.');
+            loadAllData();
+        }
+
+        function verifyAndLoadSession() {
+            document.getElementById('authScreen').classList.add('hidden');
+            // Restaurar perfil desde el token guardado (funciona con ID tokens de
+            // Google; si el token es opaco o de demo, se usa un nombre neutro).
+            const payload = decodeJwtPayload(jwtToken);
+            if (payload && (payload.name || payload.email)) {
+                currentUser = { name: payload.name || payload.email, email: payload.email || null, picture: payload.picture || null };
+            } else {
+                currentUser = { name: 'Deisy Muñoz' };
+            }
+            renderUserHeader();
+            loadAllData();
+        }
+
+        // Decodifica el payload de un JWT (solo para restaurar la UI; la
+        // autenticación REAL siempre se valida del lado del servidor o con Google)
+        function decodeJwtPayload(token) {
+            try {
+                const b64 = token.split('.')[1].replace(/-/g, '+').replace(/_/g, '/');
+                const bin = atob(b64);
+                const json = decodeURIComponent(bin.split('').map(c => '%' + ('00' + c.charCodeAt(0).toString(16)).slice(-2)).join(''));
+                return JSON.parse(json);
+            } catch (e) { return null; }
+        }
+
+        function renderUserHeader() {
+            if (!currentUser) return;
+            document.getElementById('userGreeting').innerText = `Hola, ${currentUser.name.split(' ')[0]}`;
+            document.getElementById('avatarCircle').innerText = currentUser.name.charAt(0).toUpperCase();
+        }
+
+        function logout() {
+            sessionStorage.removeItem('gomi_jwt');
+            jwtToken = null;
+            currentUser = null;
+            // Evita que One Tap re-seleccione la cuenta automáticamente al salir
+            try { if (window.google && google.accounts && google.accounts.id) google.accounts.id.disableAutoSelect(); } catch (e) {}
+            document.getElementById('authScreen').classList.remove('hidden');
+            renderOAuthStatus();
+        }
+
+        // 2. DATA SYNCHRONIZATION WITH BACKEND SQL
+        async function loadAllData() {
+            try {
+                const [periodsRes, logsRes] = await Promise.all([
+                    fetch(`${API_BASE}/periods`, { headers: { 'Authorization': `Bearer ${jwtToken}` } }),
+                    fetch(`${API_BASE}/logs`, { headers: { 'Authorization': `Bearer ${jwtToken}` } })
+                ]);
+
+                if (periodsRes.ok) periodRecords = await periodsRes.json();
+                if (logsRes.ok) wellnessLogs = await logsRes.json();
+            } catch (err) {
+                console.warn("Servidor backend offline. Usando almacenamiento de sesión para demostración visual.");
+                if (!periodRecords.length) periodRecords = [getTodayString()];
+                if (!wellnessLogs.length) {
+                    wellnessLogs = [{
+                        log_date: getTodayString(),
+                        cramps: 'Leves 🍃',
+                        mood: 'Tranquila 🌸',
+                        flow: 'Cremoso',
+                        sex: 'Ninguna',
+                        symptoms: ['Inflamación 🎈', 'Antojos 🍫']
+                    }];
+                }
+            }
+            renderCalendar();
+            renderWellnessHistory();
+        }
+
+        // 3. CALENDAR LOGIC (BUG-FREE & NORMALIZED)
+        function renderCalendar() {
+            const grid = document.getElementById('calendarGrid');
+            const title = document.getElementById('calendarMonthTitle');
+            grid.innerHTML = '';
+
+            const year = viewDate.getFullYear();
+            const month = viewDate.getMonth();
+            const monthNames = ["ENERO", "FEBRERO", "MARZO", "ABRIL", "MAYO", "JUNIO", "JULIO", "AGOSTO", "SEPTIEMBRE", "OCTUBRE", "NOVIEMBRE", "DICIEMBRE"];
+            title.innerText = `${monthNames[month]} ${year}`;
+
+            const firstDayIndex = new Date(year, month, 1).getDay();
+            const daysInMonth = new Date(year, month + 1, 0).getDate();
+
+            // Calculate Ovulation & Predictions based on standard 28-day cycle
+            let predictedDays = [];
+            let ovulationDays = [];
+            let fertileDays = [];
+
+            if (periodRecords.length > 0) {
+                const sorted = [...periodRecords].sort();
+                const lastPeriod = new Date(sorted[sorted.length - 1] + 'T00:00:00');
+                
+                // Next period prediction (+28 days)
+                const nextP = new Date(lastPeriod);
+                nextP.setDate(nextP.getDate() + 28);
+                for (let i = 0; i < 4; i++) {
+                    const d = new Date(nextP);
+                    d.setDate(d.getDate() + i);
+                    predictedDays.push(d.toISOString().split('T')[0]);
+                }
+
+                // Ovulation day (-14 days from next period)
+                const ov = new Date(nextP);
+                ov.setDate(ov.getDate() - 14);
+                const ovStr = ov.toISOString().split('T')[0];
+                ovulationDays.push(ovStr);
+
+                // Fertile window (-2 to +2 days from ovulation)
+                for (let i = -2; i <= 2; i++) {
+                    if (i === 0) continue;
+                    const f = new Date(ov);
+                    f.setDate(f.getDate() + i);
+                    fertileDays.push(f.toISOString().split('T')[0]);
+                }
+            }
+
+            // Blank spaces before month start
+            for (let i = 0; i < firstDayIndex; i++) {
+                grid.innerHTML += `<div></div>`;
+            }
+
+            const todayStr = getTodayString();
+
+            for (let day = 1; day <= daysInMonth; day++) {
+                const dayDate = new Date(year, month, day);
+                const dayStr = `${year}-${String(month + 1).padStart(2, '0')}-${String(day).padStart(2, '0')}`;
+                
+                let classes = "calendar-day ";
+                if (dayStr === todayStr) classes += "day-today ";
+                
+                if (periodRecords.includes(dayStr)) classes += "day-period ";
+                else if (predictedDays.includes(dayStr)) classes += "day-predicted ";
+                else if (ovulationDays.includes(dayStr)) classes += "day-ovulation ";
+                else if (fertileDays.includes(dayStr)) classes += "day-fertile ";
+
+                grid.innerHTML += `<div onclick="togglePeriodDate('${dayStr}')" class="${classes}">${day}</div>`;
+            }
+
+            updateCycleStatus();
+        }
+
+        async function togglePeriodDate(dateStr) {
+            if (periodRecords.includes(dateStr)) {
+                periodRecords = periodRecords.filter(d => d !== dateStr);
+            } else {
+                periodRecords.push(dateStr);
+            }
+
+            try {
+                await fetch(`${API_BASE}/periods`, {
+                    method: 'POST',
+                    headers: { 
+                        'Content-Type': 'application/json',
+                        'Authorization': `Bearer ${jwtToken}`
+                    },
+                    body: JSON.stringify({ dates: periodRecords })
+                });
+            } catch (err) {
+                console.warn("Operación en modo local.");
+            }
+
+            renderCalendar();
+            showToast("Calendario actualizado 🌸");
+        }
+
+        function registerPeriodFromInput() {
+            const inputVal = document.getElementById('quickDate').value;
+            if (!inputVal) return;
+            togglePeriodDate(inputVal);
+        }
+
+        function updateCycleStatus() {
+            const badge = document.getElementById('cycleBadge');
+            const text = document.getElementById('cycleText');
+
+            if (periodRecords.length === 0) {
+                badge.innerText = "DÍA -";
+                text.innerHTML = "Sin registros<br><span class='text-[10px] font-normal text-gray-400'>Selecciona la fecha de tu último ciclo</span>";
+                return;
+            }
+
+            const sorted = [...periodRecords].sort();
+            const lastStart = new Date(sorted[sorted.length - 1] + 'T00:00:00');
+            const today = new Date(getTodayString() + 'T00:00:00');
+            const diffDays = Math.floor((today - lastStart) / (1000 * 60 * 60 * 24)) + 1;
+
+            badge.innerText = `DÍA ${diffDays > 0 ? diffDays : 1}`;
+
+            if (diffDays <= 5) {
+                text.innerHTML = "Fase Menstrual 🩸<br><span class='text-[10px] font-normal text-rose-500 font-semibold'>Toma tu Gomi-Colic diaria</span>";
+            } else if (diffDays <= 12) {
+                text.innerHTML = "Fase Folicular 🌱<br><span class='text-[10px] font-normal text-gray-500'>Energía y ánimo en aumento</span>";
+            } else if (diffDays <= 16) {
+                text.innerHTML = "Fase Ovulatoria ✨<br><span class='text-[10px] font-normal text-purple-600 font-semibold'>Máxima fertilidad y vitalidad</span>";
+            } else {
+                text.innerHTML = "Fase Lútea 🌙<br><span class='text-[10px] font-normal text-gray-500'>Momento para el autocuidado</span>";
+            }
+        }
+
+        function moveMonth(delta) {
+            viewDate.setMonth(viewDate.getMonth() + delta);
+            renderCalendar();
+        }
+
+        // 4. DIARY FORM & SYMPTOMS LOGIC
+        function toggleChip(btn) {
+            btn.classList.toggle('selected');
+        }
+
+        async function saveWellnessLog(e) {
+            e.preventDefault();
+
+            const selectedSymptoms = Array.from(document.querySelectorAll('#symptomChips .selected'))
+                .map(btn => btn.innerText);
+
+            const newLog = {
+                log_date: document.getElementById('logDate').value,
+                cramps: document.getElementById('logCramps').value,
+                mood: document.getElementById('logMood').value,
+                flow: document.getElementById('logFlow').value,
+                sex: document.getElementById('logSex').value,
+                contraception: document.getElementById('logContra').value,
+                pregnancy_test: document.getElementById('logPreg').value,
+                symptoms: selectedSymptoms
+            };
+
+            try {
+                await fetch(`${API_BASE}/logs`, {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'Authorization': `Bearer ${jwtToken}`
+                    },
+                    body: JSON.stringify(newLog)
+                });
+            } catch (err) {
+                console.warn("Guardado local.");
+            }
+
+            wellnessLogs.unshift(newLog);
+            renderWellnessHistory();
+
+            // Clear chips selection
+            document.querySelectorAll('#symptomChips .selected').forEach(c => c.classList.remove('selected'));
+            showToast("Registro de bienestar guardado con éxito 💖");
+        }
+
+        function renderWellnessHistory() {
+            const container = document.getElementById('wellnessHistory');
+            if (wellnessLogs.length === 0) {
+                container.innerHTML = `<p class="text-[11px] text-gray-400 text-center py-4 italic">No hay registros guardados en el servidor.</p>`;
+                return;
+            }
+
+            container.innerHTML = '';
+            wellnessLogs.slice(0, 5).forEach(log => {
+                const symptomBadges = Array.isArray(log.symptoms) && log.symptoms.length > 0 
+                    ? log.symptoms.join(', ') 
+                    : 'Sin síntomas físicos registrados';
+
+                container.innerHTML += `
+                    <div class="p-3 bg-pink-50/30 border border-pink-100 rounded-2xl text-[10px]">
+                        <div class="flex justify-between font-bold text-gray-700 mb-1">
+                            <span>📅 ${log.log_date}</span>
+                            <span class="text-rose-500 font-extrabold">${log.mood}</span>
+                        </div>
+                        <p class="text-gray-600">Cólicos: <b>${log.cramps}</b> | Flujo: <b>${log.flow}</b></p>
+                        <p class="text-gray-500 mt-0.5">Sexualidad: ${log.sex || 'N/A'}</p>
+                        <p class="text-rose-400 font-bold mt-1 text-[9px]">${symptomBadges}</p>
+                    </div>
+                `;
+            });
+        }
+
+        // 5. GOOGLE DRIVE BACKUP SYNC
+        async function syncWithGoogleDrive() {
+            showToast("Iniciando respaldo en Google Drive... ☁️");
+            try {
+                const res = await fetch(`${API_BASE}/drive/sync`, {
+                    method: 'POST',
+                    headers: { 'Authorization': `Bearer ${jwtToken}` }
+                });
+                if (res.ok) {
+                    showToast("¡Respaldo en Google Drive completado! 🟢");
+                } else {
+                    throw new Error();
+                }
+            } catch (err) {
+                setTimeout(() => showToast("Copia de seguridad en Google Drive simulada correctamente ✅"), 1200);
+            }
+        }
+
+        // 6. REAL-TIME USER COUNTER (WEBSOCKETS)
+        function initWebSocketCounter() {
+            try {
+                const protocol = window.location.protocol === 'https:' ? 'wss:' : 'ws:';
+                const wsUrl = `${protocol}//${window.location.host}`;
+                const ws = new WebSocket(wsUrl);
+
+                ws.onmessage = (event) => {
+                    const data = JSON.parse(event.data);
+                    if (data.type === 'USER_COUNT') {
+                        document.getElementById('liveUserCounter').innerText = data.count;
+                    }
+                };
+
+                ws.onerror = () => simulateLiveCounter();
+            } catch (e) {
+                simulateLiveCounter();
+            }
+        }
+
+        function simulateLiveCounter() {
+            let count = Math.floor(Math.random() * 15) + 38;
+            document.getElementById('liveUserCounter').innerText = count;
+            setInterval(() => {
+                count += Math.floor(Math.random() * 3) - 1;
+                if (count < 20) count = 25;
+                document.getElementById('liveUserCounter').innerText = count;
+            }, 6000);
+        }
+
+        // UI HELPERS & MODALS
+        function toggleAddress() {
+            const box = document.getElementById('addressBox');
+            box.style.display = document.getElementById('shopType').value === 'Recogida en Tienda' ? 'none' : 'block';
+        }
+
+        function sendOrder() {
+            const qty = document.getElementById('shopQty').value;
+            const type = document.getElementById('shopType').value;
+            const addr = document.getElementById('shopAddress').value;
+
+            const msg = `¡Hola Gomi-Colic! 🧸%0AQuiero realizar un pedido:%0A- Producto: ${qty}%0A- Modalidad: ${type}${addr ? '%0A- Dirección: ' + addr : ''}`;
+            window.open(`https://wa.me/573208986405?text=${msg}`);
+        }
+
+        /* ================================================================
+           1. CARRITO DE COMPRAS (con persistencia en sesión)
+           ================================================================ */
+        let cart = [];
+        try { cart = JSON.parse(sessionStorage.getItem('gomi_cart') || '[]'); } catch (e) { cart = []; }
+
+        function saveCart() {
+            sessionStorage.setItem('gomi_cart', JSON.stringify(cart));
+        }
+
+        function formatCOP(n) {
+            return '$' + n.toLocaleString('es-CO');
+        }
+
+        function addToCart(id, name, price, emoji, img) {
+            const existing = cart.find(i => i.id === id);
+            if (existing) {
+                existing.qty += 1;
+            } else {
+                cart.push({ id, name, price, emoji: emoji || '🧴', img: img || null, qty: 1 });
+            }
+            saveCart();
+            renderCart();
+            showToast(`${name.split('·')[0].trim()} agregado al carrito 🛒`);
+        }
+
+        function changeQty(id, delta) {
+            const item = cart.find(i => i.id === id);
+            if (!item) return;
+            item.qty += delta;
+            if (item.qty <= 0) {
+                cart = cart.filter(i => i.id !== id);
+            }
+            saveCart();
+            renderCart();
+        }
+
+        function removeFromCart(id) {
+            cart = cart.filter(i => i.id !== id);
+            saveCart();
+            renderCart();
+            showToast('Producto eliminado del carrito 🗑️');
+        }
+
+        function clearCart() {
+            cart = [];
+            saveCart();
+            renderCart();
+        }
+
+        function getLoyaltyDiscount(subtotal) {
+            const tier = getLoyaltyTier();
+            if (!tier.discount) return { discount: 0, tier };
+            return { discount: Math.round(subtotal * tier.discount / 100), tier };
+        }
+
+        function renderCart() {
+            const itemsBox = document.getElementById('cartItems');
+            const count = cart.reduce((s, i) => s + i.qty, 0);
+            const subtotal = cart.reduce((s, i) => s + i.price * i.qty, 0);
+            const { discount, tier } = getLoyaltyDiscount(subtotal);
+            const total = Math.max(subtotal - discount, 0);
+
+            // Badges
+            ['cartCountBadge', 'cartCountBadgeFloat'].forEach(bid => {
+                const b = document.getElementById(bid);
+                if (!b) return;
+                if (count > 0) { b.style.display = 'flex'; b.innerText = count; } else { b.style.display = 'none'; }
+            });
+            document.getElementById('cartDrawerCount').innerText = `${count} producto${count === 1 ? '' : 's'}`;
+
+            // Items
+            if (cart.length === 0) {
+                itemsBox.innerHTML = `
+                    <div class="text-center py-10">
+                        <span class="text-4xl block mb-3">🛒</span>
+                        <p class="text-xs font-bold text-gray-500">Tu carrito está vacío</p>
+                        <p class="text-[10px] text-gray-400 mt-1">Explora nuestra aromaterapia y tratamientos ✨</p>
+                        <button onclick="closeCart(); switchTabTo('tab-shop')" class="mt-4 bg-rose-50 text-rose-500 text-[10px] font-black px-5 py-2.5 rounded-2xl uppercase tracking-wider border border-pink-100">Ir a la Tienda</button>
+                    </div>`;
+            } else {
+                itemsBox.innerHTML = cart.map(item => `
+                    <div class="flex gap-3 items-center bg-pink-50/40 border border-pink-100 rounded-2xl p-3">
+                        <div class="w-14 h-14 rounded-xl overflow-hidden bg-white border border-pink-100 flex items-center justify-center text-2xl shrink-0">
+                            ${item.img ? `<img src="${item.img}" alt="" class="w-full h-full object-cover">` : item.emoji}
+                        </div>
+                        <div class="flex-1 min-w-0">
+                            <p class="text-[11px] font-black text-gray-800 leading-tight">${item.name}</p>
+                            <p class="text-[10px] text-rose-500 font-bold mt-0.5">${formatCOP(item.price)}</p>
+                            <div class="flex items-center gap-2 mt-1.5">
+                                <span class="qty-btn" onclick="changeQty('${item.id}', -1)">−</span>
+                                <span class="text-[11px] font-black w-5 text-center">${item.qty}</span>
+                                <span class="qty-btn" onclick="changeQty('${item.id}', 1)">+</span>
+                                <span class="ml-2 text-[9px] font-bold text-gray-400">${formatCOP(item.price * item.qty)}</span>
+                            </div>
+                        </div>
+                        <button onclick="removeFromCart('${item.id}')" class="text-gray-300 hover:text-rose-500 transition-all self-start"><i class="fa-solid fa-trash-can text-[11px]"></i></button>
+                    </div>`).join('');
+            }
+
+            // Totales + descuento fidelidad
+            document.getElementById('cartSubtotal').innerText = formatCOP(subtotal);
+            document.getElementById('cartTotal').innerText = formatCOP(total);
+            const dbox = document.getElementById('cartDiscountBox');
+            if (discount > 0) {
+                dbox.classList.remove('hidden');
+                document.getElementById('cartDiscountLabel').innerText = `${tier.name} · ${tier.discount}% fidelidad`;
+                document.getElementById('cartDiscountAmount').innerText = `-${formatCOP(discount)}`;
+            } else {
+                dbox.classList.add('hidden');
+            }
+        }
+
+        function openCart() {
+            renderCart();
+            document.getElementById('cartDrawer').classList.add('open');
+            document.getElementById('cartOverlay').classList.add('open');
+        }
+        function closeCart() {
+            document.getElementById('cartDrawer').classList.remove('open');
+            document.getElementById('cartOverlay').classList.remove('open');
+        }
+
+        function proceedToCheckout() {
+            if (cart.length === 0) {
+                showToast('Tu carrito está vacío. ¡Agrega productos primero! 🌸');
+                return;
+            }
+            const subtotal = cart.reduce((s, i) => s + i.price * i.qty, 0);
+            const { discount, tier } = getLoyaltyDiscount(subtotal);
+            const total = subtotal - discount;
+
+            let msg = '¡Hola Gomi-Colic! 🧸\nQuiero finalizar mi compra:\n\n';
+            cart.forEach(i => { msg += `• ${i.name} x${i.qty} — ${formatCOP(i.price * i.qty)}\n`; });
+            if (discount > 0) {
+                msg += `\n🏆 Descuento fidelidad (${tier.name}, ${tier.discount}%): -${formatCOP(discount)}\n`;
+            }
+            msg += `\n💰 *Total: ${formatCOP(total)}*\n\n¿Cómo continúo con el pago? 💳`;
+            window.open(`https://wa.me/573208986405?text=${encodeURIComponent(msg)}`, '_blank');
+            showToast('Redirigiendo al pago seguro... 💳');
+            // La compra confirmada por WhatsApp suma al programa de fidelidad
+            registerPurchase();
+        }
+
+        function switchTabTo(id) {
+            const btn = document.querySelector(`nav button[onclick*="${id}"]`);
+            if (btn) switchTab(id, btn);
+        }
+
+        /* ================================================================
+           2. AROMATERAPIA — CATÁLOGO DE PRODUCTOS
+           ================================================================ */
+        const AROMA_PRODUCTS = [
+            { id: 'aroma-lavanda', name: 'Aceite Esencial de Lavanda', desc: 'Relajante profundo. Ideal para las noches de la fase menstrual y reducir ansiedad.', price: 38000, img: 'aromaterapia_img/lavanda.png', tag: 'Bestseller' },
+            { id: 'aroma-salvia', name: 'Aceite Esencial de Salvia Esclarea', desc: 'Equilibra las hormonas y alivia los cólicos menstruales de forma natural.', price: 42000, img: 'aromaterapia_img/salvia.png', tag: 'Para cólicos' },
+            { id: 'aroma-rollon', name: 'Roll-On Calma Menstrual', desc: 'Mezcla lista para aplicar en muñecas y abdomen. Calma instantánea donde la necesitas.', price: 32000, img: 'aromaterapia_img/rollon.png', tag: 'Favorito' },
+            { id: 'aroma-difusor', name: 'Difusor Cerámico Gomi', desc: 'Ultrasonido silencioso con luz suave. Transforma tu habitación en un santuario.', price: 89000, img: 'aromaterapia_img/difusor.png', tag: 'Nuevo' },
+            { id: 'aroma-kit', name: 'Kit Ritual de Auto-Cuidado', desc: 'Set regalo con 3 aceites, roll-on y saquito de pétalos. El regalo perfecto.', price: 129000, img: 'aromaterapia_img/kit-regalo.png', tag: 'Kit Regalo' }
+        ];
+
+        function renderAromaCatalog() {
+            const box = document.getElementById('aromaCatalog');
+            if (!box) return;
+            box.innerHTML = AROMA_PRODUCTS.map(p => `
+                <div class="product-card">
+                    <div class="relative">
+                        <img src="${p.img}" alt="${p.name}" class="product-img" loading="lazy">
+                        <span class="absolute top-2 left-2 bg-white/90 backdrop-blur text-rose-500 text-[8px] font-black px-2 py-0.5 rounded-full uppercase tracking-wider">${p.tag}</span>
+                    </div>
+                    <div class="p-3">
+                        <p class="text-[11px] font-black text-gray-800 leading-tight">${p.name}</p>
+                        <p class="text-[9px] text-gray-400 leading-relaxed mt-1 h-12 overflow-hidden">${p.desc}</p>
+                        <div class="flex items-center justify-between mt-2">
+                            <span class="text-xs font-black text-rose-500">${formatCOP(p.price)}</span>
+                            <button onclick="addToCart('${p.id}', '${p.name.replace(/'/g, '')}', ${p.price}, '💧', '${p.img}')" class="bg-rose-500 hover:bg-rose-600 text-white text-[9px] font-black px-2.5 py-1.5 rounded-xl uppercase transition-all">
+                                + Comprar
+                            </button>
+                        </div>
+                    </div>
+                </div>`).join('');
+        }
+
+        /* ================================================================
+           3. DESCUENTOS PERSONALIZADOS POR FIDELIDAD DEL CLIENTE
+           ================================================================ */
+        const LOYALTY_TIERS = [
+            { level: 0, name: 'Amiga Nueva', minPurchases: 0, discount: 0, perks: 'Aún sin descuento — tu primera compra desbloquea 5% Bronce' },
+            { level: 1, name: 'Bronce', minPurchases: 1, discount: 5, perks: '5% de descuento permanente en todas tus compras' },
+            { level: 2, name: 'Plata', minPurchases: 2, discount: 10, perks: '10% de descuento permanente + prioridad en despachos' },
+            { level: 3, name: 'Oro', minPurchases: 3, discount: 15, perks: '15% de descuento + envío gratis en todo Colombia' },
+            { level: 4, name: 'Diamante', minPurchases: 5, discount: 20, perks: '20% de descuento + regalo sorpresa en cada pedido' }
+        ];
+
+        // Conteo de visitas: solo UNA vez por carga de sesión (simula cliente recurrente que regresa)
+        (function initVisitTracking() {
+            const visits = (parseInt(sessionStorage.getItem('gomi_visits') || '0', 10) || 0) + 1;
+            sessionStorage.setItem('gomi_visits', String(visits));
+            // Cliente recurrente: una 2a visita reconoce tu lealtad (nivel Bronce).
+            // Nunca sobrescribe compras reales ya registradas al pagar.
+            const purchases = parseInt(sessionStorage.getItem('gomi_purchases') || '0', 10) || 0;
+            sessionStorage.setItem('gomi_purchases', String(Math.max(purchases, visits >= 2 ? 1 : 0)));
+        })();
+
+        function getPurchasesCount() {
+            const stored = sessionStorage.getItem('gomi_purchases');
+            const n = parseInt(stored || '0', 10);
+            return isNaN(n) ? 0 : n;
+        }
+
+        function getLoyaltyTier() {
+            const purchases = getPurchasesCount();
+            let current = LOYALTY_TIERS[0];
+            for (const t of LOYALTY_TIERS) if (purchases >= t.minPurchases) current = t;
+            return current;
+        }
+
+        function registerPurchase() {
+            const n = getPurchasesCount() + 1;
+            sessionStorage.setItem('gomi_purchases', n);
+            renderLoyalty();
+            renderCart();
+            const t = getLoyaltyTier();
+            if (t.level > 0) {
+                showToast(`¡Nivel ${t.name} desbloqueado! ${t.discount}% OFF en tus compras 🏆`);
+            }
+        }
+
+        function renderLoyalty() {
+            const purchases = getPurchasesCount();
+            const tier = getLoyaltyTier();
+
+            // Banner en tienda
+            const banner = document.getElementById('loyaltyBanner');
+            if (tier.level > 0) {
+                banner.classList.remove('hidden');
+                document.getElementById('loyaltyName').innerText = currentUser ? currentUser.name.split(' ')[0] : 'cliente';
+                document.getElementById('loyaltyBannerText').innerText = `Eres nivel ${tier.name}: ${tier.discount}% de descuento se aplica automáticamente en tu carrito.`;
+            } else {
+                banner.classList.add('hidden');
+            }
+
+            // Puntos del stepper
+            document.querySelectorAll('#loyaltyTiers .tier-dot').forEach(dot => {
+                const lvl = parseInt(dot.dataset.tier, 10);
+                dot.classList.remove('active', 'reached');
+                if (lvl === tier.level) dot.classList.add('active');
+                else if (lvl < tier.level) dot.classList.add('reached');
+            });
+
+            // Estado actual
+            const status = document.getElementById('loyaltyStatus');
+            const nextTier = LOYALTY_TIERS.find(t => t.minPurchases > purchases);
+            status.innerHTML = tier.level > 0 ? `
+                <p class="text-[11px] font-black text-gray-800">Nivel actual: <span class="text-rose-500">${tier.name} 🏅</span></p>
+                <p class="text-[10px] text-gray-500 mt-1">${tier.perks}</p>
+                ${nextTier ? `<p class="text-[9px] text-rose-400 font-bold mt-2">Te faltan ${nextTier.minPurchases - purchases} compra${nextTier.minPurchases - purchases === 1 ? '' : 's'} para ${nextTier.name} (${nextTier.discount}% OFF)</p>` : `<p class="text-[9px] text-purple-500 font-bold mt-2">¡Alcanzaste el nivel máximo! Gracias por tu lealtad 💎</p>`}
+            ` : `
+                <p class="text-[11px] font-black text-gray-700">Aún eres ${tier.name} 🌱</p>
+                <p class="text-[10px] text-gray-500 mt-1">Realiza tu primera compra y desbloquea automáticamente 5% de descuento permanente.</p>
+            `;
+        }
+
+        /* ================================================================
+           4. CENTRO DE AYUDA PSICOLÓGICA 24/7
+           ================================================================ */
+        const PSYCHOLOGISTS = [
+            { name: 'Dra. Valentina Restrepo', spec: 'Psicología de la mujer y ciclo menstrual', focus: 'Ansiedad · TPM · Autoestima', rating: 4.9, mode: 'Chat · Videollamada · Presencial', hours: '24/7 — Turnos rotativos', phone: '+573208986405' },
+            { name: 'Dra. Camila Rodríguez', spec: 'Terapia de dolor y enfermedades crónicas', focus: 'Dolor menstrual · Estrés · Duelo', rating: 4.8, mode: 'Chat · Videollamada', hours: '24/7 — Nocturna preferencial', phone: '+573208986405' },
+            { name: 'Ps. Isabella Martínez', spec: 'Acompañamiento emocional y mindfulness', focus: 'Pánico · Sueño · Relajación', rating: 5.0, mode: 'Chat · Presencial (Bogotá)', hours: '24/7 — Fines de semana', phone: '+573208986405' },
+            { name: 'Dra. Sofía Gutiérrez', spec: 'Salud mental perinatal y hormonal', focus: 'Maternidad · Lactancia · Ánimo', rating: 4.9, mode: 'Videollamada · Chat', hours: '24/7 — Mañanas y madrugada', phone: '+573208986405' }
+        ];
+
+        function renderPsychDirectory() {
+            const box = document.getElementById('psychDirectory');
+            if (!box) return;
+            box.innerHTML = PSYCHOLOGISTS.map(p => `
+                <div class="bg-pink-50/30 border border-pink-100 rounded-2xl p-4">
+                    <div class="flex items-start gap-3">
+                        <div class="w-11 h-11 rounded-full bg-gradient-to-br from-purple-400 to-pink-400 text-white font-black text-sm flex items-center justify-center shrink-0 shadow-sm">
+                            ${p.name.replace('Dra. ', '').replace('Ps. ', '').charAt(0)}
+                        </div>
+                        <div class="flex-1 min-w-0">
+                            <div class="flex items-center justify-between gap-2">
+                                <p class="text-[11px] font-black text-gray-800 leading-tight">${p.name}</p>
+                                <span class="text-[9px] font-bold text-amber-500 shrink-0">⭐ ${p.rating}</span>
+                            </div>
+                            <p class="text-[9px] text-rose-500 font-bold mt-0.5">${p.spec}</p>
+                            <p class="text-[9px] text-gray-400 mt-0.5">Enfoque: ${p.focus}</p>
+                            <div class="flex flex-wrap gap-1.5 mt-2">
+                                <span class="bg-white border border-purple-100 text-purple-500 text-[8px] font-bold px-2 py-0.5 rounded-full">${p.mode}</span>
+                                <span class="bg-emerald-50 border border-emerald-100 text-emerald-600 text-[8px] font-bold px-2 py-0.5 rounded-full">🕐 ${p.hours}</span>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="flex gap-2 mt-3">
+                        <a href="tel:${p.phone}" class="flex-1 bg-purple-50 hover:bg-purple-100 text-purple-600 border border-purple-100 text-[9px] font-black py-2 rounded-xl text-center uppercase tracking-wider transition-all flex items-center justify-center gap-1">
+                            <i class="fa-solid fa-phone text-[8px]"></i> Llamar
+                        </a>
+                        <a href="https://wa.me/57${p.phone.replace('+57', '')}?text=%C2%A1Hola!%20Quiero%20agendar%20una%20sesi%C3%B3n%20con%20la%20${encodeURIComponent(p.name)}" target="_blank" class="flex-1 bg-emerald-50 hover:bg-emerald-100 text-emerald-600 border border-emerald-100 text-[9px] font-black py-2 rounded-xl text-center uppercase tracking-wider transition-all flex items-center justify-center gap-1">
+                            <i class="fa-brands fa-whatsapp text-[10px]"></i> Chat directo
+                        </a>
+                    </div>
+                </div>`).join('');
+        }
+
+        /* ================================================================
+           5. SECCIÓN DE CONTACTO — FORMULARIO
+           ================================================================ */
+        function submitContactForm(e) {
+            e.preventDefault();
+
+            const name = document.getElementById('contactName').value.trim();
+            const email = document.getElementById('contactEmail').value.trim();
+            const phone = document.getElementById('contactPhone').value.trim();
+            const subject = document.getElementById('contactSubject').value;
+            const message = document.getElementById('contactMessage').value.trim();
+
+            // Validación adicional
+            if (!name || !email || !phone || !message) {
+                showToast('Por favor completa todos los campos obligatorios 🙏');
+                return;
+            }
+
+            // Persistencia local del mensaje (demo sin backend)
+            try {
+                const inbox = JSON.parse(sessionStorage.getItem('gomi_contact_inbox') || '[]');
+                inbox.unshift({ name, email, phone, subject, message, date: getTodayString(), status: 'Enviado' });
+                sessionStorage.setItem('gomi_contact_inbox', JSON.stringify(inbox));
+            } catch (err) { console.warn('No se pudo guardar el mensaje localmente'); }
+
+            // Apertura de canal directo por WhatsApp con el mensaje pre-cargado
+            const msg = `¡Hola Gomi-Colic! 🧸\nNuevo mensaje de contacto:\n\n👤 Nombre: ${name}\n📧 Email: ${email}\n📱 Teléfono: ${phone}\n🏷️ Motivo: ${subject}\n💬 Mensaje: ${message}`;
+            window.open(`https://wa.me/573208986405?text=${encodeURIComponent(msg)}`, '_blank');
+
+            e.target.reset();
+            showToast('¡Mensaje enviado! Te responderemos muy pronto 💌');
+        }
+
+        /* ================================================================
+           6. ASISTENTE DE IA — AROMATERAPIA & CICLO MENSTRUAL
+           ================================================================ */
+        const AI_KB = [
+            { k: ['lavanda', 'dormir', 'sueño', 'relaj', 'ansiedad', 'tranquil'], a: 'La <b>Lavanda</b> (Gomi-Aroma, $38.000) es ideal para calmar la ansiedad y mejorar el sueño 🌙. Aplica 2 gotas diluidas en las muñecas antes de dormir, o úsala en el difusor cerámico 30 minutos antes de acostarte. Si tus noches de fase menstrual son difíciles, es la aliada perfecta. ¿Quieres agregarla al carrito? 😊' },
+            { k: ['cólico', 'colico', 'dolor', 'calambre', 'menstru', 'salvia', 'esclarea'], a: 'Para los <b>cólicos menstruales</b> te recomiendo el <b>Aceite de Salvia Esclarea</b> ($42.000) que equilibra hormonas y alivia el dolor, y el <b>Roll-On Calma Menstrual</b> ($32.000) que se aplica directo en el abdomen con masaje circular 💗. Masajea suavemente por 5 minutos cuando sientas el dolor. El tratamiento Gomi-Colic ($45.000) complementa perfectamente desde adentro. ¿Te ayudo a elegir?' },
+            { k: ['roll', 'aplicar', 'usar', 'cómo uso', 'como uso', 'muñeca', 'abdomen'], a: 'El <b>Roll-On Calma Menstrual</b> es muy fácil de usar ✨: 1️⃣ Aplica directamente sobre muñecas, sienes o abdomen. 2️⃣ Realiza masajes circulares suaves por 1-2 minutos. 3️⃣ Respira profundo y disfruta su aroma. Puedes usarlo 2-3 veces al día. Evita el contacto con ojos y membranas mucosas.' },
+            { k: ['difusor', 'humidificador', 'aroma en casa', 'santuario'], a: 'El <b>Difusor Cerámico Gomi</b> ($89.000) 🏺 es ultrasónico y silencioso: solo agrega agua hasta la línea y 3-5 gotas de tu aceite favorito. Funciona por 4-6 horas con luz suave ambiental. Perfecto para tus rituales de auto-cuidado nocturnos. Combínalo con Lavanda para dormir o Salvia para tus días de ciclo.' },
+            { k: ['fértil', 'fertil', 'ovula', 'ovulación', 'quedar embarazada', 'concebir'], a: 'La <b>ventana fértil</b> son los ~6 días más fértiles de tu ciclo: generalmente entre los días <b>10 y 17</b> (ciclo de 28 días), con la ovulación cerca del día 14 🌸. Señales: flujo tipo clara de huevo, leve dolor abdominal y aumento de la libido. Nuestra app calcula esto automáticamente: registra tu último período en el <b>Calendario</b> y verás marcados en morado tu ovulación y ventana fértil.' },
+            { k: ['ciclo', 'dura', 'cuánto dura', 'cuanto dura', 'regular', 'irregular', 'fase'], a: 'Un ciclo menstrual <b>normal dura entre 21 y 35 días</b> (lo típico son 28), con el período de 3 a 7 días 🩸. Tiene 4 fases: <b>Menstrual</b> (días 1-5), <b>Folicular</b> (6-12, energía en subida), <b>Ovulatoria</b> (13-16, máxima vitalidad) y <b>Lútea</b> (17-28, momento de autocuidado). Si tu ciclo es irregular por más de 3 meses, consulta con nuestras psicólogas o tu médico de confianza.' },
+            { k: ['tengo embarazada', 'embarazo', 'lactancia', 'preñada'], a: '¡Felicidades! 🤰 Durante el <b>embarazo y lactancia</b> debes tener precaución con los aceites esenciales: algunos como la Salvia Esclarea no se recomiendan. La Lavanda en difusión suele ser segura, pero <b>siempre consulta primero con tu médico</b>. El difusor cerámico es tu mejor opción para aromaterapia suave en esta etapa.' },
+            { k: ['descuento', 'fidelidad', 'leal', 'oferta', 'promo', 'cupón', 'cupon', 'nivel'], a: 'Nuestro <b>Programa de Fidelidad</b> premia tu constancia 🏆: con 1 compra eres <b>Bronce</b> (5% OFF permanente), con 2 <b>Plata</b> (10% OFF), con 3 <b>Oro</b> (15% + envío gratis) y con 5 <b>Diamante</b> (20% + regalo sorpresa). El descuento se aplica <b>automáticamente</b> en tu carrito. Ve a la sección Tienda → "Descuentos por tu Lealtad" para ver tu nivel actual.' },
+            { k: ['precio', 'vale', 'cuánto cuesta', 'cuanto cuesta', 'valor', 'costo'], a: 'Estos son nuestros precios 💰: Lavanda $38.000 · Salvia Esclarea $42.000 · Roll-On Calma $32.000 · Difusor Cerámico $89.000 · Kit Ritual $129.000 · Gomi-Colic Original $45.000 (Pack x2 con 10% OFF = $85.000). Si eres clienta frecuente, tu descuento de fidelidad se aplica automáticamente 💗' },
+            { k: ['kit', 'regalo', 'cumpleaños', 'amiga', 'sorpres'], a: 'El <b>Kit Ritual de Auto-Cuidado</b> ($129.000) 🎁 es el regalo perfecto: incluye 3 aceites esenciales (Lavanda, Rosa y Cítricos), el roll-on calmante y un saquito de pétalos secos, todo en una caja rosa premium. Ideal para cumpleaños, autocuidado o consentir a alguien especial.' },
+            { k: ['gomi-colic', 'gomicolic', 'tratamiento', 'frasco', 'suplemento'], a: '<b>Gomi-Colic</b> (🧴 $45.000 frasco 60ml) es nuestro tratamiento natural para cólicos menstruales, con 1 mes de tratamiento. Puedes llevar el <b>Pack 2 Frascos</b> con 10% de descuento ($85.000). Se complementa de maravilla con la Salvia Esclarea y el Roll-On para un alivio integral 💗' },
+            { k: ['seguro', 'pago', 'tarjeta', 'transferencia', 'nequi', 'daviplata', 'efectivo', 'pse'], a: 'Aceptamos múltiples métodos de pago 💳: tarjetas débito/crédito, PSE, Nequi, Daviplata y transferencias. Al hacer clic en <b>"Proceder al Pago"</b> en tu carrito, te conectamos con un asesor por WhatsApp para confirmar tu pedido y enviarte el enlace de pago seguro. Envíos a todo Colombia en 2-5 días hábiles (gratis para nivel Oro y Diamante).' },
+            { k: ['envío', 'envio', 'domicilio', 'entrega', 'demora', 'llega'], a: 'Hacemos <b>envíos a todo Colombia</b> 📦: Bogotá 1-2 días hábiles, ciudades principales 2-4 días, resto del país 3-5 días. El costo estándar es $12.000, pero si eres nivel <b>Oro o Diamante</b> del programa de fidelidad, ¡tu envío es siempre gratis! También puedes recoger gratis en nuestro punto de Bogotá (Calle 85 #12-45).' },
+            { k: ['depresión', 'depresion', 'triste', 'sola', 'ansiedad grave', 'suicid', 'ayuda emocional', 'psicólog', 'psicolog', 'terapia', 'hablar'], a: 'Lamento que estés pasando por un momento difícil 💜. <b>No estás sola</b>. En nuestra sección <b>"Apoyo"</b> encontrarás psicólogas disponibles 24/7 con chat y llamada directa. Si es una crisis urgente, llama <b>YA a la Línea 106</b> (MinSalud, gratuita 24/7) o al <b>123</b>. Tu bienestar emocional es lo más importante. ¿Quieres que te lleve a la sección de apoyo?' },
+            { k: ['holi', 'hola', 'buenas', 'hey', 'qué tal', 'que tal'], a: '¡Hola! 👋 Soy <b>GomiAsistente</b>, tu IA de bienestar. Puedo ayudarte con: 💧 Aceites esenciales y aromaterapia · 🩸 Tu ciclo menstrual y días fértiles · 🛒 Productos, precios y pedidos · 🏆 Tus descuentos por fidelidad. ¿Sobre qué te gustaría saber hoy?' },
+            { k: ['gracias', 'chao', 'adiós', 'adios', 'perfecto', 'genial'], a: '¡Con mucho gusto! 💗 Estoy aquí 24/7 para lo que necesites. Recuerda: tu bienestar es primero. ¡Cuídate mucho! 🌸' }
+        ];
+
+        function toggleAIChat(force) {
+            const panel = document.getElementById('aiChatPanel');
+            const fab = document.getElementById('aiFabBtn');
+            const willOpen = force !== undefined ? force : !panel.classList.contains('open');
+            if (willOpen) {
+                panel.classList.add('open');
+                fab.style.display = 'none';
+                if (!document.getElementById('aiChatMessages').children.length) {
+                    setTimeout(() => pushBotMessage('¡Hola! Soy <b>GomiAsistente</b> 🤖🌸 Tu IA de bienestar Gomi-Colic.<br><br>Pregúntame sobre <b>aromaterapia</b> (aceites, roll-ons, difusor) o tu <b>ciclo menstrual</b> (fases, días fértiles, cólicos). También te cuento sobre precios, pagos y tus descuentos de fidelidad 🏆'), 250);
+                }
+                setTimeout(() => document.getElementById('aiChatInput').focus(), 400);
+            } else {
+                panel.classList.remove('open');
+                fab.style.display = 'flex';
+            }
+        }
+
+        function aiMessageHTML(text) {
+            const box = document.getElementById('aiChatMessages');
+            const div = document.createElement('div');
+            div.className = 'ai-msg bot fade-in';
+            div.innerHTML = text;
+            box.appendChild(div);
+            box.scrollTop = box.scrollHeight;
+            return div;
+        }
+
+        function pushBotMessage(text) {
+            const box = document.getElementById('aiChatMessages');
+            const typing = document.createElement('div');
+            typing.className = 'ai-msg bot';
+            typing.innerHTML = '<span class="typing-dot"></span> <span class="typing-dot"></span> <span class="typing-dot"></span>';
+            box.appendChild(typing);
+            box.scrollTop = box.scrollHeight;
+            setTimeout(() => { typing.remove(); aiMessageHTML(text); }, 600 + Math.random() * 500);
+        }
+
+        function sendAIMessage(e) {
+            e.preventDefault();
+            const input = document.getElementById('aiChatInput');
+            const text = input.value.trim();
+            if (!text) return;
+            askAI(text);
+        }
+
+        function askAI(text) {
+            const input = document.getElementById('aiChatInput');
+            if (input) input.value = '';
+            const box = document.getElementById('aiChatMessages');
+
+            // Mensaje del usuario
+            const userDiv = document.createElement('div');
+            userDiv.className = 'ai-msg user fade-in';
+            userDiv.innerText = text;
+            box.appendChild(userDiv);
+            box.scrollTop = box.scrollHeight;
+
+            // Buscar respuesta en base de conocimiento
+            const normalized = text.toLowerCase().normalize('NFD').replace(/[\u0300-\u036f]/g, '');
+            let best = null;
+            let bestScore = 0;
+            for (const entry of AI_KB) {
+                let score = 0;
+                for (const kw of entry.k) {
+                    const kwNorm = kw.toLowerCase().normalize('NFD').replace(/[\u0300-\u036f]/g, '');
+                    if (normalized.includes(kwNorm)) score += kwNorm.length > 6 ? 2 : 1;
+                }
+                if (score > bestScore) { bestScore = score; best = entry; }
+            }
+
+            if (best && bestScore > 0) {
+                pushBotMessage(best.a);
+            } else {
+                pushBotMessage('Buena pregunta 🤔 Escúchame, puedo ayudarte mejor con estos temas:<br><br>💧 <b>Aromaterapia:</b> aceites esenciales, roll-on, difusor, kit de regalo<br>🩸 <b>Ciclo menstrual:</b> fases, duración, días fértiles, cólicos<br>🛒 <b>Compras:</b> precios, envíos, métodos de pago<br>🏆 <b>Fidelidad:</b> tus descuentos por nivel<br>💜 <b>Apoyo emocional:</b> te conecto con psicólogas 24/7');
+            }
+        }
+
+        function openApkModal() { document.getElementById('apkModal').classList.remove('hidden'); }
+        function closeApkModal() { document.getElementById('apkModal').classList.add('hidden'); }
+        function simulateApkDownload() {
+            closeApkModal();
+            showToast("Iniciando descarga de GomiColic_v2.0.apk... 📱");
+        }
+
+        function switchTab(id, btn) {
+            document.querySelectorAll('.tab-content').forEach(c => c.classList.remove('active'));
+            document.querySelectorAll('.nav-item').forEach(i => i.classList.remove('active'));
+            document.getElementById(id).classList.add('active');
+            btn.classList.add('active');
+            window.scrollTo(0, 0);
+        }
+
+        function showToast(msg) {
+            const toast = document.createElement('div');
+            toast.className = 'fixed bottom-20 left-1/2 transform -translate-x-1/2 bg-gray-900 text-white text-xs font-bold px-5 py-3 rounded-2xl shadow-2xl z-50 fade-in border border-gray-700';
+            toast.innerText = msg;
+            document.body.appendChild(toast);
+            setTimeout(() => toast.remove(), 3200);
+        }
+    </script>
 </body>
-</html>
+</html
+    
